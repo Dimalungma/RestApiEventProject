@@ -1,0 +1,6 @@
+@RestApiEventProject_HostAddress = http://localhost:5231
+
+GET {{RestApiEventProject_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
