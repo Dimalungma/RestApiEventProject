@@ -1,0 +1,44 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace RestApiEventProject.DTO;
+/// <summary>
+/// Запрос для создания очередного объекта
+/// </summary>
+public record CreateEventRequestDto : IValidatableObject
+{
+    /// <summary>
+    /// Заголовок события
+    /// </summary>
+    [Required]
+    [StringLength(200, MinimumLength = 1)]
+    public string Title { get; set; } = string.Empty;
+    /// <summary>
+    /// Подробное описание (опционально)
+    /// </summary>
+    public string? Description { get; set; }
+    /// <summary>
+    /// Время начала события
+    /// </summary>
+    [Required]
+    public DateTime StartAt { get; set; }
+    /// <summary>
+    /// Время окончания события
+    /// </summary>
+    [Required]
+    public DateTime EndAt { get; set; }
+
+    /// <summary>
+    /// Проверка на базовую логику временного континуума
+    /// </summary>
+    /// <param name="validationContext"></param>
+    /// <returns></returns>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (EndAt <= StartAt)
+        {
+            yield return new ValidationResult(
+                "EndAt должно быть позже StartAt.",
+                new[] { nameof(EndAt), nameof(StartAt) });
+        }
+    }
+}
