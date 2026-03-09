@@ -4,39 +4,51 @@ namespace RestApiEventProject.Services;
 
 public class EventService : IEventService
 {
-    private List<Event> events = []; //Пока так, дальше будет репозиторий\база
+    private Dictionary<int, Event> _events = []; //Пока так, дальше будет репозиторий\база
+    private int _nextId = 1; //Иначе рано или поздно удялят\создадут ивент, и при повторном обращении потеряю идемподентость
     public IEnumerable<Event> GetAll()
     {
-        // вернуть список
-        throw new NotImplementedException();
+        return _events.Values.ToList().AsReadOnly();
     }
 
     public Event? GetById(int id)
     {
-        // найти по id
-        throw new NotImplementedException();
+        if (_events.ContainsKey(id))
+            return _events[id];
+        else
+            return null;
     }
 
     public Event Create(Event eventItem)
     {
-        // назначить id
-        // добавить в список
-        // вернуть созданный объект
-        throw new NotImplementedException();
+        eventItem.Id = _nextId;
+        _events.Add(_nextId ,eventItem);
+        _nextId++;
+        return eventItem;
     }
 
     public bool Update(int id, Event eventItem)
     {
-        // найти существующее событие
-        // если нет -> false
-        // иначе обновить поля и вернуть true
-        throw new NotImplementedException();
+        if (_events.ContainsKey(id))
+        {
+            _events[id].Title = eventItem.Title;
+            _events[id].Description = eventItem.Description;
+            _events[id].StartAt = eventItem.StartAt;
+            _events[id].EndAt = eventItem.EndAt;
+            return true;
+        }
+        else
+            return false;
     }
 
     public bool Delete(int id)
     {
-        // найти и удалить
-        // true / false
-        throw new NotImplementedException();
+        if (_events.ContainsKey(id))
+        {
+            _events.Remove(id);
+            return true;
+        }
+        else
+            return false;
     }
 }
