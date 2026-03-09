@@ -10,7 +10,7 @@ public record CreateEventRequestDto : IValidatableObject
     /// Заголовок события
     /// </summary>
     [Required]
-    [StringLength(200, MinimumLength = 1)]
+    [StringLength(200, MinimumLength = 1, ErrorMessage ="Превышение длины в 200 символов или пустой ввод")]
     public string Title { get; set; } = string.Empty;
     /// <summary>
     /// Подробное описание (опционально)
