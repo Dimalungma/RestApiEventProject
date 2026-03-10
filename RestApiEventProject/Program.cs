@@ -16,7 +16,7 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddTransient<IEventMapper, EventMapper>();
+builder.Services.AddSingleton<IEventMapper, EventMapper>();
 builder.Services.AddSingleton<IEventService, EventService>(); //Сейчас храним список в сервисе, поэтому Singleton
 //TODO: Разделить сервис и хранение
 

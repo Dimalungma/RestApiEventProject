@@ -9,7 +9,7 @@ namespace RestApiEventProject.Controllers;
 /// CRUD операции для управления мероприятиями
 /// </summary>
 [ApiController]
-[Route("[controller]")]
+[Route("events")]
 public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;

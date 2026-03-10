@@ -19,12 +19,10 @@ public record UpdateEventRequestDto : IValidatableObject
     /// <summary>
     /// Время начала события
     /// </summary>
-    [Required]
     public DateTime StartAt { get; set; }
     /// <summary>
     /// Время окончания события
     /// </summary>
-    [Required]
     public DateTime EndAt { get; set; }
 
     /// <summary>
@@ -34,6 +32,18 @@ public record UpdateEventRequestDto : IValidatableObject
     /// <returns></returns>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (StartAt == DateTime.MinValue)
+        {
+            yield return new ValidationResult(
+                "StartAt имеет значение по умолчанию или не задан",
+                new[] { nameof(StartAt) });
+        }
+        if (EndAt == DateTime.MinValue)
+        {
+            yield return new ValidationResult(
+                "EndAt имеет значение по умолчанию или не задан",
+                new[] { nameof(EndAt) });
+        }
         if (EndAt <= StartAt)
         {
             yield return new ValidationResult(
