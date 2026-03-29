@@ -21,13 +21,14 @@ public class EventsController : ControllerBase
         _eventMapper = eventMapper;
     }
     /// <summary>
-    /// Запрос всех текущих мероприятий
+    /// Запрос всех мероприятий (возможна фильтрация)
     /// </summary>
+    /// <param name="query">фильтры запроса</param>
     /// <returns></returns>
     [HttpGet]
-    public IActionResult GetAll()
+    public IActionResult GetAll([FromQuery] GetEventsQuery query)
     {
-        var events = _eventService.GetAll();
+        var events = _eventService.GetAll(query);
         return Ok(_eventMapper.ToResponseDtoList(events));
     }
     /// <summary>
