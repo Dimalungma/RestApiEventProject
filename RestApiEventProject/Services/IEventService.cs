@@ -1,10 +1,11 @@
 ﻿using RestApiEventProject.Models;
+using RestApiEventProject.Queries;
 
 namespace RestApiEventProject.Services;
 
 public interface IEventService
 {
-    IEnumerable<Event> GetAll(GetEventsQuery query);
+    PaginatedResult<Event> GetAll(GetEventsQuery query);
     Event? GetById(int id);
     Event Create(Event eventItem);
     bool Update(int id, Event eventItem);

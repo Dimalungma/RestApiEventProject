@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RestApiEventProject.DTO;
 using RestApiEventProject.Models;
+using RestApiEventProject.Queries;
 using RestApiEventProject.Services;
 
 namespace RestApiEventProject.Controllers;
@@ -28,8 +29,15 @@ public class EventsController : ControllerBase
     [HttpGet]
     public IActionResult GetAll([FromQuery] GetEventsQuery query)
     {
-        var events = _eventService.GetAll(query);
-        return Ok(_eventMapper.ToResponseDtoList(events));
+        var paged_events = _eventService.GetAll(query);
+        var response = new PaginatedResult<EventResponseDto> //Придется дублировать, иначе не вижу как удержать DTO
+        {
+            TotalCount = paged_events.TotalCount,
+            Page = paged_events.Page,
+            CurrentItemCount = paged_events.CurrentItemCount,
+            Items = _eventMapper.ToResponseDtoList(paged_events.Items)
+        };
+        return Ok(response);
     }
     /// <summary>
     /// Запрос конкретного мероприятия

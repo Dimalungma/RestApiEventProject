@@ -1,4 +1,5 @@
 ﻿using RestApiEventProject.Models;
+using RestApiEventProject.Queries;
 
 namespace RestApiEventProject.Services;
 
@@ -6,7 +7,7 @@ public class EventService : IEventService
 {
     private Dictionary<int, Event> _events = []; //Пока так, дальше будет репозиторий\база
     private int _nextId = 1; //Иначе рано или поздно удялят\создадут ивент, и при повторном обращении потеряю идемподентость
-    public IEnumerable<Event> GetAll(GetEventsQuery query)
+    public PaginatedResult<Event> GetAll(GetEventsQuery query)
     {
         IQueryable<Event> queryable = _events.Values.AsQueryable();
 
@@ -26,7 +27,21 @@ public class EventService : IEventService
             queryable = queryable.Where(e => e.EndAt <= query.To.Value);
         }
 
-        return queryable.ToList().AsReadOnly();
+        var totalCount = queryable.Count();
+
+        var pagedEvents = queryable
+            .OrderBy(e => e.Id)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToList().AsReadOnly();
+
+        return new PaginatedResult<Event>
+        {
+            TotalCount = totalCount,
+            Page = query.Page,
+            CurrentItemCount = pagedEvents.Count,
+            Items = pagedEvents
+        };
     }
 
     public Event? GetById(int id)
