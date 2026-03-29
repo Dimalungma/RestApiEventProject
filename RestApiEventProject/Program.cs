@@ -1,10 +1,12 @@
+using RestApiEventProject;
+using RestApiEventProject.Middleware;
 using RestApiEventProject.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.ConfigureLogger(); //Extension метод с конфигурацией Serilog'а
 // Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -22,7 +24,7 @@ builder.Services.AddSingleton<IEventService, EventService>(); //Сейчас х�
 
 
 var app = builder.Build();
-
+app.UseMiddleware<CustomExceptionHandler>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
