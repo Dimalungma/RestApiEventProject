@@ -6,7 +6,7 @@ namespace RestApiEventProject.Services;
 /// <summary>
 /// Сервис для работы с бронированиями мероприятий.
 /// </summary>
-public class BookingService : IBookingService
+public class BookingService : IBookingService, IBookingProcessingService
 {
     private readonly IEventService eventService; 
     private readonly ConcurrentDictionary<long, Booking> _bookings = new();
@@ -45,5 +45,27 @@ public class BookingService : IBookingService
         if (!_bookings.TryGetValue(bookingId, out var booking))
             return Task.FromResult<Booking?>(null);
         return Task.FromResult<Booking?>(booking);
+    }
+
+    //Вынес в отдельный интерфейс, чтобы потом можно было красиво разделить при переходе на EF, а сейчас не снимать private с _bookings
+    public Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync() 
+    {
+        var pendingBookings = _bookings.Values
+            .Where(booking => booking.Status == BookingStatus.Pending)
+            .ToList()
+            .AsReadOnly();
+
+        return Task.FromResult<IReadOnlyCollection<Booking>>(pendingBookings);
+    }
+
+    public Task<bool> ConfirmBookingAsync(long bookingId)
+    {
+        if (!_bookings.TryGetValue(bookingId, out var booking))
+            return Task.FromResult(false);
+
+        booking.Status = BookingStatus.Confirmed;
+        booking.ProcessedAt = DateTime.UtcNow;
+
+        return Task.FromResult(true);
     }
 }
