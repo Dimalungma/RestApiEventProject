@@ -1,5 +1,5 @@
-﻿using RestApiEventProject.DTO;
-using RestApiEventProject.Models;
+﻿using RestApiEventProject.Models;
+using System.Collections.Concurrent;
 
 namespace RestApiEventProject.Services;
 
@@ -8,8 +8,8 @@ namespace RestApiEventProject.Services;
 /// </summary>
 public class BookingService : IBookingService
 {
-    private readonly IEventService eventService;
-    private readonly List<Booking> bookings = [];
+    private readonly IEventService eventService; 
+    private readonly ConcurrentDictionary<long, Booking> _bookings = new();
     private long currentId = 0;
 
     public BookingService(IEventService eventService)
@@ -17,7 +17,7 @@ public class BookingService : IBookingService
         this.eventService = eventService;
     }
 
-    public async Task<BookingInfoDto?> CreateBookingAsync(int eventId)
+    public async Task<Booking?> CreateBookingAsync(int eventId)
     {
         var existingEvent = await eventService.GetByIdAsync(eventId);
 
@@ -35,27 +35,15 @@ public class BookingService : IBookingService
             ProcessedAt = null
         };
 
-        bookings.Add(booking);
+        _bookings.TryAdd(booking.Id, booking);
 
-        return MapToDto(booking);
+        return booking;
     }
 
-    public Task<BookingInfoDto?> GetBookingByIdAsync(long bookingId)
+    public Task<Booking?> GetBookingByIdAsync(long bookingId)
     {
-        var booking = bookings.FirstOrDefault(booking => booking.Id == bookingId);
-
-        return Task.FromResult(booking is null ? null : MapToDto(booking));
-    }
-
-    private static BookingInfoDto MapToDto(Booking booking)
-    {
-        return new BookingInfoDto
-        {
-            Id = booking.Id,
-            EventId = booking.EventId,
-            Status = booking.Status,
-            CreatedAt = booking.CreatedAt,
-            ProcessedAt = booking.ProcessedAt
-        };
+        if (!_bookings.TryGetValue(bookingId, out var booking))
+            return Task.FromResult<Booking?>(null);
+        return Task.FromResult<Booking?>(booking);
     }
 }

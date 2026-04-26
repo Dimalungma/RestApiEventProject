@@ -1,4 +1,4 @@
-﻿using RestApiEventProject.DTO;
+﻿using RestApiEventProject.Models;
 
 namespace RestApiEventProject.Services;
 
@@ -12,12 +12,12 @@ public interface IBookingService
     /// </summary>
     /// <param name="eventId">Идентификатор мероприятия.</param>
     /// <returns>Информация о созданной брони.</returns>
-    Task<BookingInfoDto?> CreateBookingAsync(int eventId);
+    Task<Booking?> CreateBookingAsync(int eventId);
 
     /// <summary>
     /// Возвращает бронь по её идентификатору.
     /// </summary>
     /// <param name="bookingId">Идентификатор брони.</param>
     /// <returns>Информация о брони или null, если бронь не найдена.</returns>
-    Task<BookingInfoDto?> GetBookingByIdAsync(long bookingId);
+    Task<Booking?> GetBookingByIdAsync(long bookingId);
 }
