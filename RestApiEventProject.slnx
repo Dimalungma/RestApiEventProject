@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="RestApiEventProject.Tests/RestApiProject.Tests.csproj" Id="3c14b44d-c65c-43fe-bc03-df0c69cfdd86">
     <Build Solution="Debug|*" Project="false" />
   </Project>
