@@ -47,7 +47,7 @@ public class BookingBackgroundService : BackgroundService
                 }
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken); //Увеличил до 5 в рамках отладки, так как нереально отловить момент смены, сразу идет инициализация даже с Delay в 2 секунды.
         }
     }
 }

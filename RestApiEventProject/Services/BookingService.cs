@@ -26,14 +26,9 @@ public class BookingService : IBookingService, IBookingProcessingService
             return null;
         }
 
-        var booking = new Booking
-        {
-            Id = Interlocked.Increment(ref currentId),
-            EventId = eventId,
-            Status = BookingStatus.Pending,
-            CreatedAt = DateTime.UtcNow,
-            ProcessedAt = null
-        };
+        var booking = Booking.CreatePending(
+            Interlocked.Increment(ref currentId),
+            eventId);
 
         _bookings.TryAdd(booking.Id, booking);
 
@@ -63,8 +58,17 @@ public class BookingService : IBookingService, IBookingProcessingService
         if (!_bookings.TryGetValue(bookingId, out var booking))
             return Task.FromResult(false);
 
-        booking.Status = BookingStatus.Confirmed;
-        booking.ProcessedAt = DateTime.UtcNow;
+        booking.Confirm();
+
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> RejectBookingAsync(long bookingId)
+    {
+        if (!_bookings.TryGetValue(bookingId, out var booking))
+            return Task.FromResult(false);
+
+        booking.Reject();
 
         return Task.FromResult(true);
     }

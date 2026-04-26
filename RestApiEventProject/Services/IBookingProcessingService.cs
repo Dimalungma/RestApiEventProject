@@ -8,4 +8,5 @@ public interface IBookingProcessingService
     Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync();
 
     Task<bool> ConfirmBookingAsync(long bookingId);
+    Task<bool> RejectBookingAsync(long bookingId);
 }
