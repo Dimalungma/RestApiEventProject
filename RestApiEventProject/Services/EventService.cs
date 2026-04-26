@@ -43,13 +43,21 @@ public class EventService : IEventService
             Items = pagedEvents
         };
     }
-
+    [Obsolete] //А то че я зря новые вещи узнаю в курсе
     public Event? GetById(int id)
     {
         if (_events.ContainsKey(id))
             return _events[id];
         else
             return null;
+    }
+
+    public Task<Event?> GetByIdAsync(int id) //Временная заглушка, так как скоро появится БД, и пора переходить на асинхрон
+    {
+        if (_events.TryGetValue(id, out Event? value))
+            return Task.FromResult<Event?>(value);
+        else
+            return Task.FromResult<Event?>(null);
     }
 
     public Event Create(Event eventItem)

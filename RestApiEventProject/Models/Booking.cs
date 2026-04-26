@@ -2,9 +2,9 @@
 
 public class Booking
 {
-    public Guid Id { get; set; }
+    public long Id { get; set; }
 
-    public Guid EventId { get; set; }
+    public int EventId { get; set; }
 
     public BookingStatus Status { get; set; }
 
