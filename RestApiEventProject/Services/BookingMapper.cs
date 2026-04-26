@@ -7,7 +7,7 @@ public class BookingMapper : IBookingMapper
     /// <summary>
     /// Преобразует сущность брони в DTO для ответа.
     /// </summary>
-    public BookingInfoDto MapToDto(Booking booking)
+    public BookingInfoDto ToResponseDto(Booking booking)
     {
         return new BookingInfoDto
         {

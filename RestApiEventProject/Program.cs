@@ -21,6 +21,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddSingleton<IEventMapper, EventMapper>();
 builder.Services.AddSingleton<IEventService, EventService>(); //Сейчас храним список в сервисе, поэтому Singleton
 builder.Services.AddSingleton<IBookingService, BookingService>();
+builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
 //TODO: Разделить сервис и хранение
 
 

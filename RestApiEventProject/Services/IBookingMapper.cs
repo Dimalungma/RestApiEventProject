@@ -5,5 +5,5 @@ namespace RestApiEventProject.Services;
 
 public interface IBookingMapper
 {
-    BookingInfoDto MapToDto(Booking booking);
+    BookingInfoDto ToResponseDto(Booking booking);
 }
