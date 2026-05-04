@@ -20,6 +20,15 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddSingleton<IEventMapper, EventMapper>();
 builder.Services.AddSingleton<IEventService, EventService>(); //Сейчас храним список в сервисе, поэтому Singleton
+builder.Services.AddSingleton<BookingService>();
+
+builder.Services.AddSingleton<IBookingService>(p =>
+    p.GetRequiredService<BookingService>()); //Оказывается, иначе создадутся два разных экземпляра, le упс
+
+builder.Services.AddSingleton<IBookingProcessingService>(p =>
+    p.GetRequiredService<BookingService>()); //Оказывается, иначе создадутся два разных экземпляра, le упс
+builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
+builder.Services.AddHostedService<BookingBackgroundService>();
 //TODO: Разделить сервис и хранение
 
 
@@ -32,8 +41,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapControllers();
-app.UseHttpsRedirection();
 
 app.UseHttpsRedirection();
 

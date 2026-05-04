@@ -15,12 +15,13 @@ public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
     private readonly IEventMapper _eventMapper;
-    
+    #pragma warning disable CS1591 //В этом блоке буду писать все конструкторы и свойства, чтобы без предупреждения
     public EventsController(IEventService eventService, IEventMapper eventMapper)
     {
         _eventService = eventService;
         _eventMapper = eventMapper;
     }
+    #pragma warning restore CS1591 //Тут все контроллеры, чтобы генерилась документация
     /// <summary>
     /// Запрос всех мероприятий (возможна фильтрация)
     /// </summary>
@@ -96,4 +97,6 @@ public class EventsController : ControllerBase
         else
             return NotFound();
     }
+
+    #pragma warning disable CS1591 //Тут мб какие нибудь приватные методы, хотя не уверен что все не будет в сервисе
 }
