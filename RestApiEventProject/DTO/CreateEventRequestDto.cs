@@ -24,6 +24,10 @@ public record CreateEventRequestDto : IValidatableObject
     /// Время окончания события
     /// </summary>
     public DateTime EndAt { get; set; }
+    /// <summary>
+    /// Общее количество мест
+    /// </summary>
+    public int TotalSeats { get; set; } //На кой хрен в задаче ?int, если после обязательное?
 
     /// <summary>
     /// Проверка на базовую логику временного континуума
@@ -49,6 +53,12 @@ public record CreateEventRequestDto : IValidatableObject
             yield return new ValidationResult(
                 "EndAt должно быть позже StartAt.",
                 new[] { nameof(EndAt), nameof(StartAt) });
+        }
+        if (TotalSeats <= 0)
+        {
+            yield return new ValidationResult(
+                "TotalSeats должен быть больше нуля",
+                new[] { nameof(TotalSeats) });
         }
     }
 }

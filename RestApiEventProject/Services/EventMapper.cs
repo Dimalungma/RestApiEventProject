@@ -12,7 +12,9 @@ public class EventMapper : IEventMapper
             Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
-            EndAt = dto.EndAt
+            EndAt = dto.EndAt,
+            TotalSeats = dto.TotalSeats,
+            AvailableSeats = dto.TotalSeats
         };
     }
 
@@ -23,7 +25,10 @@ public class EventMapper : IEventMapper
             Title = dto.Title,
             Description = dto.Description,
             StartAt = dto.StartAt,
-            EndAt = dto.EndAt
+            EndAt = dto.EndAt,
+            TotalSeats = dto.TotalSeats,
+            AvailableSeats = dto.AvailableSeats ?? dto.TotalSeats
+            
         };
     }
 
