@@ -13,19 +13,19 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
         var eventItem = eventService.Create(CreateEvent());
 
         // Act
-        var result = await bookingService.CreateBookingAsync(eventItem.Id);
+        var (booking, error) = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().BeGreaterThan(0);
-        result.EventId.Should().Be(eventItem.Id);
-        result.Status.Should().Be(BookingStatus.Pending);
-        result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
-        result.ProcessedAt.Should().BeNull();
+        error.Should().BeNull();
+        booking.Should().NotBeNull();
+        booking!.Id.Should().BeGreaterThan(0);
+        booking.EventId.Should().Be(eventItem.Id);
+        booking.Status.Should().Be(BookingStatus.Pending);
+        booking.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+        booking.ProcessedAt.Should().BeNull();
     }
 
     [Fact]
@@ -34,24 +34,23 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
-        var eventItem = eventService.Create(CreateEvent());
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 3));
 
         // Act
-        var firstBooking = await bookingService.CreateBookingAsync(eventItem.Id);
-        var secondBooking = await bookingService.CreateBookingAsync(eventItem.Id);
-        var thirdBooking = await bookingService.CreateBookingAsync(eventItem.Id);
+        var firstResult = await bookingService.CreateBookingAsync(eventItem.Id);
+        var secondResult = await bookingService.CreateBookingAsync(eventItem.Id);
+        var thirdResult = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Assert
-        firstBooking.Should().NotBeNull();
-        secondBooking.Should().NotBeNull();
-        thirdBooking.Should().NotBeNull();
+        firstResult.Error.Should().BeNull();
+        secondResult.Error.Should().BeNull();
+        thirdResult.Error.Should().BeNull();
 
         var ids = new[]
         {
-            firstBooking!.Id,
-            secondBooking!.Id,
-            thirdBooking!.Id
+            firstResult.Booking!.Id,
+            secondResult.Booking!.Id,
+            thirdResult.Booking!.Id
         };
 
         ids.Should().OnlyHaveUniqueItems();
@@ -63,14 +62,15 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
         var eventItem = eventService.Create(CreateEvent());
-        var createdBooking = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        var (createdBooking, createError) = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Act
         var result = await bookingService.GetBookingByIdAsync(createdBooking!.Id);
 
         // Assert
+        createError.Should().BeNull();
         result.Should().NotBeNull();
         result!.Id.Should().Be(createdBooking.Id);
         result.EventId.Should().Be(eventItem.Id);
@@ -83,15 +83,16 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
         var eventItem = eventService.Create(CreateEvent());
-        var createdBooking = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        var (createdBooking, createError) = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Act
         var confirmResult = await bookingService.ConfirmBookingAsync(createdBooking!.Id);
         var result = await bookingService.GetBookingByIdAsync(createdBooking.Id);
 
         // Assert
+        createError.Should().BeNull();
         confirmResult.Should().BeTrue();
         result.Should().NotBeNull();
         result!.Status.Should().Be(BookingStatus.Confirmed);
@@ -104,15 +105,16 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
         var eventItem = eventService.Create(CreateEvent());
-        var createdBooking = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        var (createdBooking, createError) = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Act
         var rejectResult = await bookingService.RejectBookingAsync(createdBooking!.Id);
         var result = await bookingService.GetBookingByIdAsync(createdBooking.Id);
 
         // Assert
+        createError.Should().BeNull();
         rejectResult.Should().BeTrue();
         result.Should().NotBeNull();
         result!.Status.Should().Be(BookingStatus.Rejected);
@@ -120,34 +122,36 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task CreateBookingAsync_Should_Return_Null_When_Event_Does_Not_Exist()
+    public async Task CreateBookingAsync_Should_Return_EventNotFound_When_Event_Does_Not_Exist()
     {
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
 
         // Act
-        var result = await bookingService.CreateBookingAsync(999);
+        var (booking, error) = await bookingService.CreateBookingAsync(999);
 
         // Assert
-        result.Should().BeNull();
+        booking.Should().BeNull();
+        error.Should().Be(BookingCreateError.EventNotFound);
     }
 
     [Fact]
-    public async Task CreateBookingAsync_Should_Return_Null_When_Event_Was_Deleted()
+    public async Task CreateBookingAsync_Should_Return_EventNotFound_When_Event_Was_Deleted()
     {
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
         var eventItem = eventService.Create(CreateEvent());
+
         eventService.Delete(eventItem.Id);
 
         // Act
-        var result = await bookingService.CreateBookingAsync(eventItem.Id);
+        var (booking, error) = await bookingService.CreateBookingAsync(eventItem.Id);
 
         // Assert
-        result.Should().BeNull();
+        booking.Should().BeNull();
+        error.Should().Be(BookingCreateError.EventNotFound);
     }
 
     [Fact]
@@ -214,23 +218,23 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
-
-        var eventItem = eventService.Create(CreateEvent());
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 10));
 
         // Act
-        var tasks = Enumerable.Range(0, 1000)
-            .Select(_ => bookingService.CreateBookingAsync(eventItem.Id));
+        var tasks = Enumerable.Range(0, 10)
+            .Select(_ => Task.Run(() => bookingService.CreateBookingAsync(eventItem.Id)));
 
         var results = await Task.WhenAll(tasks);
 
         // Assert
-        results.Should().NotContainNulls();
+        results.Should().OnlyContain(result => result.Error == null);
+        results.Should().OnlyContain(result => result.Booking != null);
 
         var ids = results
-            .Select(booking => booking!.Id)
+            .Select(result => result.Booking!.Id)
             .ToList();
 
-        ids.Should().HaveCount(1000);
+        ids.Should().HaveCount(10);
         ids.Should().OnlyHaveUniqueItems();
     }
 
@@ -240,33 +244,147 @@ public class BookingServiceTests
         // Arrange
         var eventService = new EventService();
         var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 3));
 
-        var eventItem = eventService.Create(CreateEvent());
+        var firstResult = await bookingService.CreateBookingAsync(eventItem.Id);
+        var secondResult = await bookingService.CreateBookingAsync(eventItem.Id);
+        var thirdResult = await bookingService.CreateBookingAsync(eventItem.Id);
 
-        var firstBooking = await bookingService.CreateBookingAsync(eventItem.Id);
-        var secondBooking = await bookingService.CreateBookingAsync(eventItem.Id);
-        var thirdBooking = await bookingService.CreateBookingAsync(eventItem.Id);
-
-        await bookingService.ConfirmBookingAsync(secondBooking!.Id);
-        await bookingService.RejectBookingAsync(thirdBooking!.Id);
+        await bookingService.ConfirmBookingAsync(secondResult.Booking!.Id);
+        await bookingService.RejectBookingAsync(thirdResult.Booking!.Id);
 
         // Act
         var result = await bookingService.GetPendingBookingsAsync();
 
         // Assert
+        firstResult.Error.Should().BeNull();
+        secondResult.Error.Should().BeNull();
+        thirdResult.Error.Should().BeNull();
+
         result.Should().ContainSingle();
-        result.Single().Id.Should().Be(firstBooking!.Id);
+        result.Single().Id.Should().Be(firstResult.Booking!.Id);
         result.Single().Status.Should().Be(BookingStatus.Pending);
     }
 
-    private static Event CreateEvent()
+    [Fact]
+    public async Task CreateBookingAsync_Should_Decrease_AvailableSeats_By_One()
+    {
+        // Arrange
+        var eventService = new EventService();
+        var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 3));
+
+        // Act
+        var (booking, error) = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        // Assert
+        error.Should().BeNull();
+        booking.Should().NotBeNull();
+        eventItem.AvailableSeats.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_Should_Return_NoAvailableSeats_When_Seats_Are_Over()
+    {
+        // Arrange
+        var eventService = new EventService();
+        var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 1));
+
+        await bookingService.CreateBookingAsync(eventItem.Id);
+
+        // Act
+        var (booking, error) = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        // Assert
+        booking.Should().BeNull();
+        error.Should().Be(BookingCreateError.NoAvailableSeats);
+        eventItem.AvailableSeats.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Reject_And_ReleaseSeats_Should_Restore_AvailableSeats()
+    {
+        // Arrange
+        var eventService = new EventService();
+        var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 1));
+
+        var (booking, error) = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        // Act
+        await bookingService.RejectBookingAsync(booking!.Id);
+        eventItem.ReleaseSeats();
+
+        // Assert
+        error.Should().BeNull();
+        eventItem.AvailableSeats.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Reject_And_ReleaseSeats_Should_Allow_Create_New_Booking()
+    {
+        // Arrange
+        var eventService = new EventService();
+        var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 1));
+
+        var firstResult = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        await bookingService.RejectBookingAsync(firstResult.Booking!.Id);
+        eventItem.ReleaseSeats();
+
+        // Act
+        var secondResult = await bookingService.CreateBookingAsync(eventItem.Id);
+
+        // Assert
+        firstResult.Error.Should().BeNull();
+        secondResult.Error.Should().BeNull();
+        secondResult.Booking.Should().NotBeNull();
+        secondResult.Booking!.Id.Should().NotBe(firstResult.Booking.Id);
+        eventItem.AvailableSeats.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_Should_Prevent_Overbooking_When_Called_In_Parallel()
+    {
+        // Arrange
+        var eventService = new EventService();
+        var bookingService = new BookingService(eventService);
+        var eventItem = eventService.Create(CreateEvent(totalSeats: 5));
+
+        // Act
+        var tasks = Enumerable.Range(0, 20)
+            .Select(_ => Task.Run(() => bookingService.CreateBookingAsync(eventItem.Id)));
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        var successfulBookings = results
+            .Where(result => result.Booking is not null)
+            .Select(result => result.Booking!)
+            .ToList();
+
+        var failedResults = results
+            .Where(result => result.Error == BookingCreateError.NoAvailableSeats)
+            .ToList();
+
+        successfulBookings.Should().HaveCount(5);
+        failedResults.Should().HaveCount(15);
+        successfulBookings.Select(booking => booking.Id).Should().OnlyHaveUniqueItems();
+        eventItem.AvailableSeats.Should().Be(0);
+    }
+
+    private static Event CreateEvent(int totalSeats = 10)
     {
         return new Event
         {
             Title = "Тестовое мероприятие",
             Description = "Описание",
             StartAt = new DateTime(2026, 4, 10, 10, 0, 0),
-            EndAt = new DateTime(2026, 4, 10, 12, 0, 0)
+            EndAt = new DateTime(2026, 4, 10, 12, 0, 0),
+            TotalSeats = totalSeats,
+            AvailableSeats = totalSeats
         };
     }
 }

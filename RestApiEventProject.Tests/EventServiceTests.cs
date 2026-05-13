@@ -264,6 +264,7 @@ public class EventServiceTests
         string title,
         DateTime startAt,
         DateTime endAt,
+        int totalSeats = 10,
         string? description = null)
     {
         return new Event
@@ -271,7 +272,9 @@ public class EventServiceTests
             Title = title,
             Description = description,
             StartAt = startAt,
-            EndAt = endAt
+            EndAt = endAt,
+            TotalSeats = totalSeats,
+            AvailableSeats = totalSeats
         };
     }
 
@@ -285,7 +288,8 @@ public class EventServiceTests
         service.Create(CreateEvent(
             title: "10 км бегит",
             startAt: new DateTime(2026, 4, 11, 10, 0, 0),
-            endAt: new DateTime(2026, 4, 11, 12, 0, 0)));
+            endAt: new DateTime(2026, 4, 11, 12, 0, 0),
+            totalSeats: 15));
 
         service.Create(CreateEvent(
             title: "Турник делат",
@@ -295,7 +299,8 @@ public class EventServiceTests
         service.Create(CreateEvent(
             title: "Анжуманя делат",
             startAt: new DateTime(2026, 5, 13, 10, 0, 0),
-            endAt: new DateTime(2026, 5, 13, 12, 0, 0)));
+            endAt: new DateTime(2026, 5, 13, 12, 0, 0),
+            totalSeats: 20));
 
         service.Create(CreateEvent(
             title: "Словарь купит",
