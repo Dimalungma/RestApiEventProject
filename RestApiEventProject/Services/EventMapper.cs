@@ -40,7 +40,9 @@ public class EventMapper : IEventMapper
             Title = eventItem.Title,
             Description = eventItem.Description,
             StartAt = eventItem.StartAt,
-            EndAt = eventItem.EndAt
+            EndAt = eventItem.EndAt,
+            TotalSeats = eventItem.TotalSeats,
+            AvailableSeats = eventItem.AvailableSeats
         };
     }
 

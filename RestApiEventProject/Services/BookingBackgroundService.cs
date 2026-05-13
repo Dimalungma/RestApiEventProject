@@ -47,6 +47,7 @@ public class BookingBackgroundService : BackgroundService
         
         try
         {
+            _logger.LogInformation($"Начата фоновая обработка брони с id {booking.Id} для мероприятия с id {booking.EventId}");
             if (stoppingToken.IsCancellationRequested)
                 return;
             await Task.Delay(ProcessingDelay, stoppingToken); //ОООООЧЕНЬ тяжелая операция
