@@ -11,28 +11,35 @@ public class BookingService : IBookingService, IBookingProcessingService
     private readonly IEventService eventService; 
     private readonly ConcurrentDictionary<long, Booking> _bookings = new();
     private long currentId = 0;
+    private readonly object _bookingLock = new();
 
     public BookingService(IEventService eventService)
     {
         this.eventService = eventService;
     }
 
-    public async Task<Booking?> CreateBookingAsync(int eventId)
+    public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId)
     {
         var existingEvent = await eventService.GetByIdAsync(eventId);
 
         if (existingEvent is null)
         {
-            return null;
+            return (null, BookingCreateError.EventNotFound);
         }
 
-        var booking = Booking.CreatePending(
-            Interlocked.Increment(ref currentId),
-            eventId);
+        lock (_bookingLock) //Вообще конечно lock в async методе такое себе. 
+        {                   //Если когда нибудь внутри появится await (а он кстати появится с добавлением EF) все сломается, как и говорилось в уроке
+            if (!existingEvent.TryReserveSeats())
+            {
+                return (null, BookingCreateError.NoAvailableSeats);
+            }
+            var booking = Booking.CreatePending(
+                Interlocked.Increment(ref currentId),
+                eventId);
 
-        _bookings.TryAdd(booking.Id, booking);
-
-        return booking;
+            _bookings.TryAdd(booking.Id, booking);
+            return (booking, null);
+        }
     }
 
     public Task<Booking?> GetBookingByIdAsync(long bookingId)

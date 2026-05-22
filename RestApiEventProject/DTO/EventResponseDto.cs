@@ -24,4 +24,12 @@ public record EventResponseDto
     /// Дата конца
     /// </summary>
     public DateTime EndAt { get; set; }
+    /// <summary>
+    /// Все места на мероприятии
+    /// </summary>
+    public int TotalSeats { get; set; }
+    /// <summary>
+    /// Доступное число мест
+    /// </summary>
+    public int AvailableSeats { get; set; }
 }

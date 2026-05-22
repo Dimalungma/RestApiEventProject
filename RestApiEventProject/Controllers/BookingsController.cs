@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using RestApiEventProject.Models;
 using RestApiEventProject.Services;
 
 namespace RestApiEventProject.Controllers;
@@ -30,15 +32,24 @@ public class BookingsController : ControllerBase
     [HttpPost("events/{id:int}/book")]
     public async Task<IActionResult> CreateBooking(int id)
     {
-        var booking = await _bookingService.CreateBookingAsync(id);
+        var (booking, error) = await _bookingService.CreateBookingAsync(id);
 
-        if (booking == null)
+        if (error == BookingCreateError.EventNotFound) 
             return NotFound($"Не найдено мероприятие с id {id}");
+        if (error == BookingCreateError.NoAvailableSeats) //Никаких exception'ов, это все бизнес логика, а значит нормальные коды ошибок и Result
+        {
+            return Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "No available seats",
+                Detail = "No available seats for this event"
+            });
+        }
 
-        var response = _bookingMapper.ToResponseDto(booking);
+        var response = _bookingMapper.ToResponseDto(booking!);
 
         return Accepted(
-            $"/bookings/{booking.Id}",
+            $"/bookings/{booking!.Id}",
             response
         );
     }
