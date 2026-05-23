@@ -2,6 +2,10 @@
 
 public class Event
 {
+    private Event()
+    {
+        Title = null!;
+    }
     public  int Id { get; set; }
 
     public required string Title { get; set; }
@@ -15,6 +19,7 @@ public class Event
     public int TotalSeats { get; set; }
 
     public int AvailableSeats { get; set; }
+    public List<Booking> Bookings { get; set; } = [];
 
     public bool TryReserveSeats(int count = 1)
     {
