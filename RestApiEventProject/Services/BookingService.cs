@@ -1,5 +1,6 @@
-﻿using RestApiEventProject.Models;
-using System.Collections.Concurrent;
+﻿using RestApiEventProject.DataAccess;
+using RestApiEventProject.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestApiEventProject.Services;
 
@@ -8,75 +9,100 @@ namespace RestApiEventProject.Services;
 /// </summary>
 public class BookingService : IBookingService, IBookingProcessingService
 {
-    private readonly IEventService eventService; 
-    private readonly ConcurrentDictionary<long, Booking> _bookings = new();
-    private long currentId = 0;
-    private readonly object _bookingLock = new();
+    private readonly AppDbContext _context;
 
-    public BookingService(IEventService eventService)
+    private static readonly SemaphoreSlim BookingSemaphore = new(1, 1);
+
+    public BookingService(AppDbContext context)
     {
-        this.eventService = eventService;
+        _context = context;
     }
 
     public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId)
     {
-        var existingEvent = await eventService.GetByIdAsync(eventId);
+
+        var existingEvent = await _context.Events.FindAsync(eventId);
+        //Буду исходить из того, что в процессе booking'а не может удалиться Event другим потоком, и не надо блокировать
 
         if (existingEvent is null)
         {
             return (null, BookingCreateError.EventNotFound);
         }
+        await BookingSemaphore.WaitAsync();
 
-        lock (_bookingLock) //Вообще конечно lock в async методе такое себе. 
-        {                   //Если когда нибудь внутри появится await (а он кстати появится с добавлением EF) все сломается, как и говорилось в уроке
+        try
+        {
+
             if (!existingEvent.TryReserveSeats())
             {
                 return (null, BookingCreateError.NoAvailableSeats);
             }
-            var booking = Booking.CreatePending(
-                Interlocked.Increment(ref currentId),
-                eventId);
 
-            _bookings.TryAdd(booking.Id, booking);
+            var lastId = await _context.Bookings
+                .OrderByDescending(b => b.Id)
+                .Select(b => b.Id)
+                .FirstOrDefaultAsync();
+
+            var booking = Booking.CreatePending(lastId + 1, eventId);
+
+            _context.Bookings.Add(booking);
+
+            await _context.SaveChangesAsync();
+
             return (booking, null);
+        }
+        finally
+        {
+            BookingSemaphore.Release();
         }
     }
 
-    public Task<Booking?> GetBookingByIdAsync(long bookingId)
+    public async Task<Booking?> GetBookingByIdAsync(long bookingId)
     {
-        if (!_bookings.TryGetValue(bookingId, out var booking))
-            return Task.FromResult<Booking?>(null);
-        return Task.FromResult<Booking?>(booking);
+        return await _context.Bookings.FindAsync(bookingId);
     }
 
     //Вынес в отдельный интерфейс, чтобы потом можно было красиво разделить при переходе на EF, а сейчас не снимать private с _bookings
-    public Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync() 
-    {
-        var pendingBookings = _bookings.Values
-            .Where(booking => booking.Status == BookingStatus.Pending)
-            .ToList()
-            .AsReadOnly();
 
-        return Task.FromResult<IReadOnlyCollection<Booking>>(pendingBookings);
+    [Obsolete]
+    public async Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync()
+    {
+        return await _context.Bookings
+            .Where(booking => booking.Status == BookingStatus.Pending)
+            .ToListAsync();
     }
 
-    public Task<bool> ConfirmBookingAsync(long bookingId)
+    [Obsolete]
+    public async Task<bool> ConfirmBookingAsync(long bookingId)
     {
-        if (!_bookings.TryGetValue(bookingId, out var booking))
-            return Task.FromResult(false);
+        var booking = await _context.Bookings.FindAsync(bookingId);
+
+        if (booking is null)
+        {
+            return false;
+        }
 
         booking.Confirm();
 
-        return Task.FromResult(true);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
-    public Task<bool> RejectBookingAsync(long bookingId)
+    [Obsolete]
+    public async Task<bool> RejectBookingAsync(long bookingId)
     {
-        if (!_bookings.TryGetValue(bookingId, out var booking))
-            return Task.FromResult(false);
+        var booking = await _context.Bookings.FindAsync(bookingId);
+
+        if (booking is null)
+        {
+            return false;
+        }
 
         booking.Reject();
 
-        return Task.FromResult(true);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }

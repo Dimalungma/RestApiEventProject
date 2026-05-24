@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using RestApiEventProject;
+using RestApiEventProject.DataAccess;
 using RestApiEventProject.Middleware;
 using RestApiEventProject.Services;
 using System.Reflection;
@@ -18,18 +20,21 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddSingleton<IEventMapper, EventMapper>();
-builder.Services.AddSingleton<IEventService, EventService>(); //Сейчас храним список в сервисе, поэтому Singleton
-builder.Services.AddSingleton<BookingService>();
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
-builder.Services.AddSingleton<IBookingService>(p =>
-    p.GetRequiredService<BookingService>()); //Оказывается, иначе создадутся два разных экземпляра, le упс
 
-builder.Services.AddSingleton<IBookingProcessingService>(p =>
-    p.GetRequiredService<BookingService>()); //Оказывается, иначе создадутся два разных экземпляра, le упс
-builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
+builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<IBookingService>(p => p.GetRequiredService<BookingService>());
+builder.Services.AddScoped<IBookingProcessingService>(p => p.GetRequiredService<BookingService>());
 builder.Services.AddHostedService<BookingBackgroundService>();
-//TODO: Разделить сервис и хранение
+
+
+builder.Services.AddSingleton<IEventMapper, EventMapper>();
+builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
 
 
 var app = builder.Build();

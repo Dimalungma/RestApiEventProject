@@ -28,16 +28,17 @@ public class EventsController : ControllerBase
     /// <param name="query">фильтры запроса</param>
     /// <returns></returns>
     [HttpGet]
-    public IActionResult GetAll([FromQuery] GetEventsQuery query)
+    public async Task<IActionResult> GetAll([FromQuery] GetEventsQuery query)
     {
-        var paged_events = _eventService.GetAll(query);
+        var pagedEvents = await _eventService.GetAllAsync(query);
         var response = new PaginatedResult<EventResponseDto> //Придется дублировать, иначе не вижу как удержать DTO
         {
-            TotalCount = paged_events.TotalCount,
-            Page = paged_events.Page,
-            CurrentItemCount = paged_events.CurrentItemCount,
-            Items = _eventMapper.ToResponseDtoList(paged_events.Items)
+            TotalCount = pagedEvents.TotalCount,
+            Page = pagedEvents.Page,
+            CurrentItemCount = pagedEvents.CurrentItemCount,
+            Items = _eventMapper.ToResponseDtoList(pagedEvents.Items)
         };
+
         return Ok(response);
     }
     /// <summary>
@@ -46,11 +47,13 @@ public class EventsController : ControllerBase
     /// <param name="id">Id запрашиваемого мероприятия</param>
     /// <returns></returns>
     [HttpGet("{id:int}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var foundevent = _eventService.GetById(id);
-        if(foundevent == null)
+        var foundevent = await _eventService.GetByIdAsync(id);
+
+        if (foundevent == null)
             return NotFound($"Не найдено мероприятие с id {id}");
+
         return Ok(_eventMapper.ToResponseDto(foundevent));
     }
     /// <summary>
@@ -59,15 +62,16 @@ public class EventsController : ControllerBase
     /// <param name="eventItem">Описание мероприятия</param>
     /// <returns></returns>
     [HttpPost]
-    public IActionResult Create([FromBody] CreateEventRequestDto eventItem)
+    public async Task<IActionResult> Create([FromBody] CreateEventRequestDto eventItem)
     {
         var newevent = _eventMapper.ToEntity(eventItem);
-        var createdevent = _eventService.Create(newevent);
+        var createdevent = await _eventService.CreateAsync(newevent);
+
         return CreatedAtAction(
             nameof(GetById),
             new { id = createdevent.Id },
             _eventMapper.ToResponseDto(createdevent)
-            );
+        );
     }
     /// <summary>
     /// Обновить существующее мероприятие
@@ -76,10 +80,11 @@ public class EventsController : ControllerBase
     /// <param name="eventItem">новые поля</param>
     /// <returns></returns>
     [HttpPut("{id:int}")]
-    public IActionResult Update(int id, [FromBody] UpdateEventRequestDto eventItem)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
         var updateevent = _eventMapper.ToEntity(eventItem);
-        if (_eventService.Update(id, updateevent))
+
+        if (await _eventService.UpdateAsync(id, updateevent))
             return NoContent();
         else
             return NotFound();
@@ -90,13 +95,13 @@ public class EventsController : ControllerBase
     /// <param name="id">номер мероприятия</param>
     /// <returns></returns>
     [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        if(_eventService.Delete(id))
+        if (await _eventService.DeleteAsync(id))
             return NoContent();
         else
             return NotFound();
     }
 
-    #pragma warning disable CS1591 //Тут мб какие нибудь приватные методы, хотя не уверен что все не будет в сервисе
+#pragma warning disable CS1591 //Тут мб какие нибудь приватные методы, хотя не уверен что все не будет в сервисе
 }

@@ -1,4 +1,6 @@
-﻿namespace RestApiEventProject.Models;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace RestApiEventProject.Models;
 
 public class Event
 {
@@ -6,6 +8,22 @@ public class Event
     {
         Title = null!;
     }
+    [SetsRequiredMembers]
+    public Event( //Конструктор для маппера
+    string title,
+    string? description,
+    DateTime startAt,
+    DateTime endAt,
+    int totalSeats)
+    {
+        Title = title;
+        Description = description;
+        StartAt = startAt;
+        EndAt = endAt;
+        TotalSeats = totalSeats;
+        AvailableSeats = totalSeats;
+    }
+
     public  int Id { get; set; }
 
     public required string Title { get; set; }
