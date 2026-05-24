@@ -20,18 +20,16 @@ public class BookingService : IBookingService, IBookingProcessingService
 
     public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId)
     {
-
-        var existingEvent = await _context.Events.FindAsync(eventId);
-        //Буду исходить из того, что в процессе booking'а не может удалиться Event другим потоком, и не надо блокировать
-
-        if (existingEvent is null)
-        {
-            return (null, BookingCreateError.EventNotFound);
-        }
+        
         await BookingSemaphore.WaitAsync();
 
         try
         {
+            var existingEvent = await _context.Events.FindAsync(eventId);
+            if (existingEvent is null)
+            {
+                return (null, BookingCreateError.EventNotFound);
+            }
 
             if (!existingEvent.TryReserveSeats())
             {

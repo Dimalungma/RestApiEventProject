@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using RestApiEventProject.Models;
 using RestApiEventProject.Queries;
 using RestApiEventProject.Services;
@@ -8,31 +9,41 @@ namespace RestApiProject.Tests;
 public class EventServiceTests
 {
     [Fact]
-    public void Create_Should_Assign_Id_And_Return_Created_Event()
+    public async Task CreateAsync_Should_Assign_Id_And_Return_Created_Event()
     {
         // Arrange
-        var service = new EventService();
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
         var eventItem = CreateEvent(
             title: "Встреча по unit-тестам",
             startAt: new DateTime(2026, 4, 10, 10, 0, 0),
             endAt: new DateTime(2026, 4, 10, 12, 0, 0));
 
         // Act
-        var result = service.Create(eventItem);
+        var result = await service.CreateAsync(eventItem);
 
         // Assert
         result.Id.Should().Be(1);
         result.Title.Should().Be("Встреча по unit-тестам");
         result.StartAt.Should().Be(new DateTime(2026, 4, 10, 10, 0, 0));
         result.EndAt.Should().Be(new DateTime(2026, 4, 10, 12, 0, 0));
+        result.TotalSeats.Should().Be(10);
+        result.AvailableSeats.Should().Be(10);
     }
 
     [Fact]
-    public void GetAll_Should_Return_All_Events_When_No_Filters_Are_Passed()
+    public async Task GetAllAsync_Should_Return_All_Events_When_No_Filters_Are_Passed()
     {
         // Arrange
-        var service = new EventService();
-        FillEvents(service);
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await FillEventsAsync(service);
 
         var query = new GetEventsQuery
         {
@@ -41,7 +52,7 @@ public class EventServiceTests
         };
 
         // Act
-        var result = service.GetAll(query);
+        var result = await service.GetAllAsync(query);
 
         // Assert
         result.TotalCount.Should().Be(5);
@@ -51,17 +62,21 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetById_Should_Return_Event_When_Id_Exists()
+    public async Task GetByIdAsync_Should_Return_Event_When_Id_Exists()
     {
         // Arrange
-        var service = new EventService();
-        var createdEvent = service.Create(CreateEvent(
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var createdEvent = await service.CreateAsync(CreateEvent(
             title: "Разработка",
             startAt: new DateTime(2026, 4, 11, 9, 0, 0),
             endAt: new DateTime(2026, 4, 11, 18, 0, 0)));
 
         // Act
-        var result = service.GetById(createdEvent.Id);
+        var result = await service.GetByIdAsync(createdEvent.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -70,24 +85,31 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetById_Should_Return_Null_When_Id_Does_Not_Exist() //Так как обращение к несуществующему ID не вызывает у меня exception, то проверка на null
+    public async Task GetByIdAsync_Should_Return_Null_When_Id_Does_Not_Exist() //Так как обращение к несуществующему ID не вызывает у меня exception, то проверка на null
     {
         // Arrange
-        var service = new EventService();
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
 
         // Act
-        var result = service.GetById(999);
+        var result = await service.GetByIdAsync(999);
 
         // Assert
         result.Should().BeNull();
     }
 
     [Fact]
-    public void Update_Should_Update_Existing_Event_And_Return_True()
+    public async Task UpdateAsync_Should_Update_Existing_Event_And_Return_True()
     {
         // Arrange
-        var service = new EventService();
-        var oldEvent = service.Create(CreateEvent(
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var oldEvent = await service.CreateAsync(CreateEvent(
             title: "Старый",
             startAt: new DateTime(2026, 4, 12, 10, 0, 0),
             endAt: new DateTime(2026, 4, 12, 11, 0, 0)));
@@ -96,51 +118,63 @@ public class EventServiceTests
             title: "Новый",
             description: "С описанием",
             startAt: new DateTime(2026, 4, 12, 12, 0, 0),
-            endAt: new DateTime(2026, 4, 12, 13, 30, 0));
+            endAt: new DateTime(2026, 4, 12, 13, 30, 0),
+            totalSeats: 20);
 
         // Act
-        var updateResult = service.Update(oldEvent.Id, updatedEvent);
-        var storedEvent = service.GetById(oldEvent.Id);
+        var updateResult = await service.UpdateAsync(oldEvent.Id, updatedEvent);
+        var storedEvent = await service.GetByIdAsync(oldEvent.Id);
 
         // Assert
         updateResult.Should().BeTrue();
+
         storedEvent.Should().NotBeNull();
         storedEvent!.Title.Should().Be("Новый");
         storedEvent.Description.Should().Be("С описанием");
         storedEvent.StartAt.Should().Be(new DateTime(2026, 4, 12, 12, 0, 0));
         storedEvent.EndAt.Should().Be(new DateTime(2026, 4, 12, 13, 30, 0));
+        storedEvent.TotalSeats.Should().Be(20);
+        storedEvent.AvailableSeats.Should().Be(20);
     }
 
     [Fact]
-    public void Update_Should_Return_False_When_Id_Does_Not_Exist()
+    public async Task UpdateAsync_Should_Return_False_When_Id_Does_Not_Exist()
     {
         // Arrange
-        var service = new EventService();
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
         var updatedEvent = CreateEvent(
             title: "НИИ ЧАВО",
             startAt: new DateTime(2026, 4, 12, 12, 0, 0),
             endAt: new DateTime(2026, 4, 12, 13, 0, 0));
 
         // Act
-        var result = service.Update(999, updatedEvent);
+        var result = await service.UpdateAsync(999, updatedEvent);
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public void Delete_Should_Remove_Existing_Event_And_Return_True()
+    public async Task DeleteAsync_Should_Remove_Existing_Event_And_Return_True()
     {
         // Arrange
-        var service = new EventService();
-        var createdEvent = service.Create(CreateEvent(
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var createdEvent = await service.CreateAsync(CreateEvent(
             title: "На удаление",
             startAt: new DateTime(2026, 4, 13, 10, 0, 0),
             endAt: new DateTime(2026, 4, 13, 11, 0, 0)));
 
         // Act
-        var deleteResult = service.Delete(createdEvent.Id);
-        var deletedEvent = service.GetById(createdEvent.Id);
+        var deleteResult = await service.DeleteAsync(createdEvent.Id);
+        var deletedEvent = await service.GetByIdAsync(createdEvent.Id);
 
         // Assert
         deleteResult.Should().BeTrue();
@@ -148,11 +182,15 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Filter_By_Title_Should_Return_Only_Matching_Events()
+    public async Task Filter_By_Title_Should_Return_Only_Matching_Events()
     {
         // Arrange
-        var service = new EventService();
-        FillEvents(service);
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await FillEventsAsync(service);
 
         var query = new GetEventsQuery
         {
@@ -162,21 +200,27 @@ public class EventServiceTests
         };
 
         // Act
-        var result = service.GetAll(query);
+        var result = await service.GetAllAsync(query);
 
         // Assert
         result.TotalCount.Should().Be(2);
+
         result.Items.Should().HaveCount(2);
+
         result.Items.Select(e => e.Title).Should().OnlyContain(title =>
             title.Contains("делат", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
-    public void Filter_By_Dates_Should_Return_Only_Events_Inside_Range()
+    public async Task Filter_By_Dates_Should_Return_Only_Events_Inside_Range()
     {
         // Arrange
-        var service = new EventService();
-        FillEvents(service);
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await FillEventsAsync(service);
 
         var query = new GetEventsQuery
         {
@@ -187,21 +231,25 @@ public class EventServiceTests
         };
 
         // Act
-        var result = service.GetAll(query);
+        var result = await service.GetAllAsync(query);
 
         // Assert
         result.TotalCount.Should().Be(3);
+
         result.Items.Should().OnlyContain(e =>
-            e.StartAt >= query.From!.Value &&
-            e.EndAt <= query.To!.Value);
+            e.StartAt >= query.From!.Value && e.EndAt <= query.To!.Value);
     }
 
     [Fact]
-    public void GetAll_Should_Return_Correct_Page_When_Pagination_Is_Applied()
+    public async Task GetAllAsync_Should_Return_Correct_Page_When_Pagination_Is_Applied()
     {
         // Arrange
-        var service = new EventService();
-        FillEvents(service);
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await FillEventsAsync(service);
 
         var query = new GetEventsQuery
         {
@@ -210,7 +258,7 @@ public class EventServiceTests
         };
 
         // Act
-        var result = service.GetAll(query);
+        var result = await service.GetAllAsync(query);
 
         // Assert
         result.TotalCount.Should().Be(5);
@@ -221,11 +269,15 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void GetAll_Should_Apply_Combined_Filters_And_Pagination()
+    public async Task GetAllAsync_Should_Apply_Combined_Filters_And_Pagination()
     {
         // Arrange
-        var service = new EventService();
-        FillEvents(service);
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        await FillEventsAsync(service);
 
         var query = new GetEventsQuery
         {
@@ -237,7 +289,7 @@ public class EventServiceTests
         };
 
         // Act
-        var result = service.GetAll(query);
+        var result = await service.GetAllAsync(query);
 
         // Assert
         result.TotalCount.Should().Be(1);
@@ -248,13 +300,16 @@ public class EventServiceTests
     }
 
     [Fact]
-    public void Delete_Should_Return_False_When_Id_Does_Not_Exist() //Исключение не бросается, поэтому просто проверяю на false
+    public async Task DeleteAsync_Should_Return_False_When_Id_Does_Not_Exist() //Исключение не бросается, поэтому просто проверяю на false
     {
         // Arrange
-        var service = new EventService();
+        using var provider = TestServiceProviderFactory.Create();
+        using var scope = provider.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
 
         // Act
-        var result = service.Delete(999);
+        var result = await service.DeleteAsync(999);
 
         // Assert
         result.Should().BeFalse();
@@ -267,42 +322,39 @@ public class EventServiceTests
         int totalSeats = 10,
         string? description = null)
     {
-        return new Event
-        {
-            Title = title,
-            Description = description,
-            StartAt = startAt,
-            EndAt = endAt,
-            TotalSeats = totalSeats,
-            AvailableSeats = totalSeats
-        };
+        return new Event(
+            title,
+            description,
+            startAt,
+            endAt,
+            totalSeats);
     }
 
-    private static void FillEvents(EventService service)
+    private static async Task FillEventsAsync(IEventService service)
     {
-        service.Create(CreateEvent(
+        await service.CreateAsync(CreateEvent(
             title: "Пресс качат",
             startAt: new DateTime(2026, 4, 10, 10, 0, 0),
             endAt: new DateTime(2026, 4, 10, 12, 0, 0)));
 
-        service.Create(CreateEvent(
+        await service.CreateAsync(CreateEvent(
             title: "10 км бегит",
             startAt: new DateTime(2026, 4, 11, 10, 0, 0),
             endAt: new DateTime(2026, 4, 11, 12, 0, 0),
             totalSeats: 15));
 
-        service.Create(CreateEvent(
+        await service.CreateAsync(CreateEvent(
             title: "Турник делат",
             startAt: new DateTime(2026, 4, 12, 10, 0, 0),
             endAt: new DateTime(2026, 4, 12, 12, 0, 0)));
 
-        service.Create(CreateEvent(
+        await service.CreateAsync(CreateEvent(
             title: "Анжуманя делат",
             startAt: new DateTime(2026, 5, 13, 10, 0, 0),
             endAt: new DateTime(2026, 5, 13, 12, 0, 0),
             totalSeats: 20));
 
-        service.Create(CreateEvent(
+        await service.CreateAsync(CreateEvent(
             title: "Словарь купит",
             startAt: new DateTime(2026, 5, 14, 10, 0, 0),
             endAt: new DateTime(2026, 5, 14, 12, 0, 0)));
