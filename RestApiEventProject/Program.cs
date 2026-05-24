@@ -38,6 +38,12 @@ builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
 
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+    //db.Database.Migrate(); // Для будущего перехода на миграции
+}
 app.UseMiddleware<CustomExceptionHandler>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
