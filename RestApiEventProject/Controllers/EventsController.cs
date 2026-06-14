@@ -21,12 +21,13 @@ public class EventsController : ControllerBase
         _eventService = eventService;
         _eventMapper = eventMapper;
     }
-    #pragma warning restore CS1591 //Тут все контроллеры, чтобы генерилась документация
+#pragma warning restore CS1591 //Тут все контроллеры, чтобы генерилась документация
     /// <summary>
     /// Запрос всех мероприятий (возможна фильтрация)
     /// </summary>
     /// <param name="query">фильтры запроса</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(PaginatedResult<EventResponseDto>), StatusCodes.Status200OK)]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] GetEventsQuery query)
     {
@@ -46,6 +47,8 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">Id запрашиваемого мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -61,6 +64,8 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="eventItem">Описание мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEventRequestDto eventItem)
     {
@@ -79,6 +84,9 @@ public class EventsController : ControllerBase
     /// <param name="id">номер мероприятия</param>
     /// <param name="eventItem">новые поля</param>
     /// <returns></returns>
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
@@ -94,6 +102,8 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">номер мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
