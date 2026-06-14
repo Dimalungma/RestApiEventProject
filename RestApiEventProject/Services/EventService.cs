@@ -19,8 +19,7 @@ public class EventService : IEventService
 
         if (!string.IsNullOrWhiteSpace(query.Title))
         {
-            queryable = queryable.Where(e =>
-                e.Title.Contains(query.Title, StringComparison.OrdinalIgnoreCase));
+            queryable = queryable.Where(e => EF.Functions.ILike(e.Title, $"%{query.Title}%"));
         }
 
         if (query.From.HasValue)

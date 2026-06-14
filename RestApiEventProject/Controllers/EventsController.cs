@@ -91,7 +91,7 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
         var updateevent = _eventMapper.ToEntity(eventItem);
-
+        //TODO добавить обработку ситуации, что новый totalSeats<availableSeats, и как вообще обновлять число доступных мест
         if (await _eventService.UpdateAsync(id, updateevent))
             return NoContent();
         else

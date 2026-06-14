@@ -107,6 +107,20 @@ public class BookingBackgroundService : BackgroundService
         {
             _logger.LogError(exception, $"Ошибка при оплате брони с id {bookingId}, отменяю бронирование");
 
+            await RejectBookingAndReleaseSeatAsync(bookingId, stoppingToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {bookingId}, отменяю бронирование");
+
+            await RejectBookingAndReleaseSeatAsync(bookingId, stoppingToken);
+        }
+    }
+
+    private async Task RejectBookingAndReleaseSeatAsync(long bookingId, CancellationToken stoppingToken)
+    {
+        try
+        {
             using var scope = _scopeFactory.CreateScope();
 
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -131,8 +145,7 @@ public class BookingBackgroundService : BackgroundService
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {bookingId}");
-            //Тут я не хочу отменять, так как неизвестно, по какому именно условию мы можем попасть в общий Exception, а значит сам Accept\Reject метод может дать exception
+            _logger.LogError(exception, $"Не удалось отменить бронь с id {bookingId} после ошибки фоновой обработки");
         }
     }
 }
