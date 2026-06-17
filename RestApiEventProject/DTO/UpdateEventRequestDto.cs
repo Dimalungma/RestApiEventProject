@@ -28,11 +28,6 @@ public record UpdateEventRequestDto : IValidatableObject
     /// Общее количество мест
     /// </summary>
     public int TotalSeats { get; set; } //На кой хрен в задаче ?int, если после обязательное?
-    /// <summary>
-    /// Количество доступных мест
-    /// </summary>
-    public int? AvailableSeats { get; set; } //Вдруг понадобится вручную скорректировать число мест?
-    //Хотя если честно, там столько вариантов сломать логику при наличии бронирований, что как будто Update вообще должен быть запрещен
 
     /// <summary>
     /// Проверка на базовую логику временного континуума
@@ -64,12 +59,6 @@ public record UpdateEventRequestDto : IValidatableObject
             yield return new ValidationResult(
                 "TotalSeats должен быть больше нуля",
                 new[] { nameof(TotalSeats) });
-        }
-        if (AvailableSeats.HasValue && TotalSeats < AvailableSeats)
-        {
-            yield return new ValidationResult(
-                "TotalSeats должен быть больше AvailableSeats",
-                new[] { nameof(TotalSeats), nameof(AvailableSeats)});
         }
     }
 }

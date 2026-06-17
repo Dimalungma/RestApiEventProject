@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using RestApiEventProject.DTO;
 using RestApiEventProject.Models;
 using RestApiEventProject.Services;
 
@@ -30,6 +31,9 @@ public class BookingsController : ControllerBase
     /// <param name="id">Id мероприятия</param>
     /// <returns></returns>
     [HttpPost("events/{id:int}/book")]
+    [ProducesResponseType(typeof(BookingInfoDto), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateBooking(int id)
     {
         var (booking, error) = await _bookingService.CreateBookingAsync(id);
@@ -60,6 +64,8 @@ public class BookingsController : ControllerBase
     /// <param name="id">Id брони</param>
     /// <returns></returns>
     [HttpGet("bookings/{id:long}")]
+    [ProducesResponseType(typeof(BookingInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBookingById(long id)
     {
         var booking = await _bookingService.GetBookingByIdAsync(id);

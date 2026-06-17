@@ -2,9 +2,14 @@
 
 public class Booking
 {
+    private Booking()
+    {
+        Event = null!;
+    }
     public long Id { get; set; }
 
     public int EventId { get; set; }
+    public Event Event { get; set; }
 
     private BookingStatus _status;
     public BookingStatus Status => _status;

@@ -1,7 +1,29 @@
-﻿namespace RestApiEventProject.Models;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace RestApiEventProject.Models;
 
 public class Event
 {
+    private Event()
+    {
+        Title = null!;
+    }
+    [SetsRequiredMembers]
+    public Event( //Конструктор для маппера
+    string title,
+    string? description,
+    DateTime startAt,
+    DateTime endAt,
+    int totalSeats)
+    {
+        Title = title;
+        Description = description;
+        StartAt = startAt;
+        EndAt = endAt;
+        TotalSeats = totalSeats;
+        AvailableSeats = totalSeats;
+    }
+
     public  int Id { get; set; }
 
     public required string Title { get; set; }
@@ -15,6 +37,7 @@ public class Event
     public int TotalSeats { get; set; }
 
     public int AvailableSeats { get; set; }
+    public List<Booking> Bookings { get; set; } = [];
 
     public bool TryReserveSeats(int count = 1)
     {

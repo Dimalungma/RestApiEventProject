@@ -21,23 +21,25 @@ public class EventsController : ControllerBase
         _eventService = eventService;
         _eventMapper = eventMapper;
     }
-    #pragma warning restore CS1591 //Тут все контроллеры, чтобы генерилась документация
+#pragma warning restore CS1591 //Тут все контроллеры, чтобы генерилась документация
     /// <summary>
     /// Запрос всех мероприятий (возможна фильтрация)
     /// </summary>
     /// <param name="query">фильтры запроса</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(PaginatedResult<EventResponseDto>), StatusCodes.Status200OK)]
     [HttpGet]
-    public IActionResult GetAll([FromQuery] GetEventsQuery query)
+    public async Task<IActionResult> GetAll([FromQuery] GetEventsQuery query)
     {
-        var paged_events = _eventService.GetAll(query);
+        var pagedEvents = await _eventService.GetAllAsync(query);
         var response = new PaginatedResult<EventResponseDto> //Придется дублировать, иначе не вижу как удержать DTO
         {
-            TotalCount = paged_events.TotalCount,
-            Page = paged_events.Page,
-            CurrentItemCount = paged_events.CurrentItemCount,
-            Items = _eventMapper.ToResponseDtoList(paged_events.Items)
+            TotalCount = pagedEvents.TotalCount,
+            Page = pagedEvents.Page,
+            CurrentItemCount = pagedEvents.CurrentItemCount,
+            Items = _eventMapper.ToResponseDtoList(pagedEvents.Items)
         };
+
         return Ok(response);
     }
     /// <summary>
@@ -45,12 +47,16 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">Id запрашиваемого мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpGet("{id:int}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var foundevent = _eventService.GetById(id);
-        if(foundevent == null)
+        var foundevent = await _eventService.GetByIdAsync(id);
+
+        if (foundevent == null)
             return NotFound($"Не найдено мероприятие с id {id}");
+
         return Ok(_eventMapper.ToResponseDto(foundevent));
     }
     /// <summary>
@@ -58,16 +64,19 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="eventItem">Описание мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpPost]
-    public IActionResult Create([FromBody] CreateEventRequestDto eventItem)
+    public async Task<IActionResult> Create([FromBody] CreateEventRequestDto eventItem)
     {
         var newevent = _eventMapper.ToEntity(eventItem);
-        var createdevent = _eventService.Create(newevent);
+        var createdevent = await _eventService.CreateAsync(newevent);
+
         return CreatedAtAction(
             nameof(GetById),
             new { id = createdevent.Id },
             _eventMapper.ToResponseDto(createdevent)
-            );
+        );
     }
     /// <summary>
     /// Обновить существующее мероприятие
@@ -75,11 +84,15 @@ public class EventsController : ControllerBase
     /// <param name="id">номер мероприятия</param>
     /// <param name="eventItem">новые поля</param>
     /// <returns></returns>
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [HttpPut("{id:int}")]
-    public IActionResult Update(int id, [FromBody] UpdateEventRequestDto eventItem)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
         var updateevent = _eventMapper.ToEntity(eventItem);
-        if (_eventService.Update(id, updateevent))
+        //TODO добавить обработку ситуации, что новый totalSeats<availableSeats, и как вообще обновлять число доступных мест
+        if (await _eventService.UpdateAsync(id, updateevent))
             return NoContent();
         else
             return NotFound();
@@ -89,14 +102,16 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">номер мероприятия</param>
     /// <returns></returns>
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        if(_eventService.Delete(id))
+        if (await _eventService.DeleteAsync(id))
             return NoContent();
         else
             return NotFound();
     }
 
-    #pragma warning disable CS1591 //Тут мб какие нибудь приватные методы, хотя не уверен что все не будет в сервисе
+#pragma warning disable CS1591 //Тут мб какие нибудь приватные методы, хотя не уверен что все не будет в сервисе
 }

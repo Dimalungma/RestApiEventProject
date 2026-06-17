@@ -7,29 +7,22 @@ public class EventMapper : IEventMapper
 {
     public Event ToEntity(CreateEventRequestDto dto)
     {
-        return new Event
-        {
-            Title = dto.Title,
-            Description = dto.Description,
-            StartAt = dto.StartAt,
-            EndAt = dto.EndAt,
-            TotalSeats = dto.TotalSeats,
-            AvailableSeats = dto.TotalSeats
-        };
+        return new Event(
+            dto.Title,
+            dto.Description,
+            dto.StartAt,
+            dto.EndAt,
+            dto.TotalSeats);
     }
 
     public Event ToEntity(UpdateEventRequestDto dto)
     {
-        return new Event
-        {
-            Title = dto.Title,
-            Description = dto.Description,
-            StartAt = dto.StartAt,
-            EndAt = dto.EndAt,
-            TotalSeats = dto.TotalSeats,
-            AvailableSeats = dto.AvailableSeats ?? dto.TotalSeats
-            
-        };
+        return new Event(
+            dto.Title,
+            dto.Description,
+            dto.StartAt,
+            dto.EndAt,
+            dto.TotalSeats);
     }
 
     public EventResponseDto ToResponseDto(Event eventItem)

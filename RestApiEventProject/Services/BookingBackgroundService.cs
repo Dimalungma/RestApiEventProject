@@ -1,12 +1,13 @@
-﻿using RestApiEventProject.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using RestApiEventProject.DataAccess;
+using RestApiEventProject.Models;
 
 namespace RestApiEventProject.Services;
 
 public class BookingBackgroundService : BackgroundService
 {
-    private readonly IBookingProcessingService _bookingProcessingService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BookingBackgroundService> _logger;
-    private readonly IEventService _eventService;
 
     private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5); 
     //Увеличил до 5 в рамках отладки, так как нереально отловить момент смены, сразу идет инициализация даже с Delay в 2 секунды.
@@ -15,14 +16,13 @@ public class BookingBackgroundService : BackgroundService
     private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
     public BookingBackgroundService(
-        IBookingProcessingService bookingProcessingService,
-        IEventService eventService,
+        IServiceScopeFactory scopeFactory,
         ILogger<BookingBackgroundService> logger)
     {
-        _bookingProcessingService = bookingProcessingService;
-        _eventService = eventService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
+
     /// <summary>
     /// Каждые N секунд проверяет, есть ли новые бронирования
     /// </summary>
@@ -32,50 +32,72 @@ public class BookingBackgroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var pendingBookings = await _bookingProcessingService.GetPendingBookingsAsync();
+            using var scope = _scopeFactory.CreateScope();
 
-            var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var pendingBookingIds = await context.Bookings
+                .Where(booking => booking.Status == BookingStatus.Pending)
+                .Select(booking => booking.Id)
+                .ToListAsync(stoppingToken);
+
+            var tasks = pendingBookingIds.Select(bookingId => ProcessBookingAsync(bookingId, stoppingToken));
 
             await Task.WhenAll(tasks);
 
-            await Task.Delay(PollingInterval, stoppingToken); 
+            await Task.Delay(PollingInterval, stoppingToken);
         }
     }
 
-    private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+    private async Task ProcessBookingAsync(long bookingId, CancellationToken stoppingToken)
     {
-        
         try
         {
+            using var scope = _scopeFactory.CreateScope();
+
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var booking = await context.Bookings
+                .FirstOrDefaultAsync(booking => booking.Id == bookingId, stoppingToken);
+
+            if (booking is null)
+            {
+                _logger.LogWarning($"Бронь с id {bookingId} не найдена");
+
+                return;
+            }
             _logger.LogInformation($"Начата фоновая обработка брони с id {booking.Id} для мероприятия с id {booking.EventId}");
             if (stoppingToken.IsCancellationRequested)
+            {
+                _logger.LogInformation($"Бронь с id {booking.Id} для мероприятия с id {booking.EventId} убрана из фоновой обработки, прислали CancellationToken");
                 return;
+            }
             await Task.Delay(ProcessingDelay, stoppingToken); //ОООООЧЕНЬ тяжелая операция
             Random payment = new Random();
             if (payment.Next(0, 6) == 5)
-                throw new PaymentRejectedException("Бронь отменена, не прошла оплата (Random)");
+                throw new PaymentRejectedException($"Бронь {booking.Id} отменена, не прошла оплата (Random)");
 
-            await _processingSemaphore.WaitAsync(stoppingToken);
-            try
-            {
-                var existingEvent = await _eventService.GetByIdAsync(booking.EventId); //Вместо InMemoryEventStore
-                if (existingEvent is null)
-                {
-                    _logger.LogWarning($"Мероприятие с id {booking.EventId} не найдено, отменяю бронирование с id {booking.Id}");
-                    var isRejected = await _bookingProcessingService.RejectBookingAsync(booking.Id);
-                    if (isRejected)
-                        _logger.LogInformation($"Бронь с id {booking.Id} отменена");
-                    return;
-                }
+            var existingEvent = await context.Events
+                .FirstOrDefaultAsync(existingEvent => existingEvent.Id == booking.EventId, stoppingToken);
 
-                var isConfirmed = await _bookingProcessingService.ConfirmBookingAsync(booking.Id);
-                if (isConfirmed)
-                    _logger.LogInformation($"Бронь с id {booking.Id} подтверждена");
-            }
-            finally
+            if (existingEvent is null)
             {
-                _processingSemaphore.Release();
+                _logger.LogWarning($"Мероприятие с id {booking.EventId} не найдено, отменяю бронирование с id {booking.Id}");
+
+                booking.Reject();
+
+                await context.SaveChangesAsync(stoppingToken);
+
+                _logger.LogInformation($"Бронь с id {booking.Id} отменена");
+
+                return;
             }
+
+            booking.Confirm();
+
+            await context.SaveChangesAsync(stoppingToken);
+
+            _logger.LogInformation($"Бронь с id {booking.Id} подтверждена");
         }
         catch (OperationCanceledException)
         {
@@ -83,26 +105,47 @@ public class BookingBackgroundService : BackgroundService
         }
         catch (PaymentRejectedException exception)
         {
-            _logger.LogError(exception, $"Ошибка при оплате брони с id {booking.Id}, отменяю бронирование");
-            await _processingSemaphore.WaitAsync(stoppingToken);
-            try
-            {
-                var existingEvent = await _eventService.GetByIdAsync(booking.EventId);
-                if (existingEvent is not null)
-                    existingEvent.ReleaseSeats();
-                var isRejected = await _bookingProcessingService.RejectBookingAsync(booking.Id);
-                if (isRejected)
-                    _logger.LogInformation($"Бронь с id {booking.Id} отменена");
-            }
-            finally
-            {
-                _processingSemaphore.Release();
-            }
+            _logger.LogError(exception, $"Ошибка при оплате брони с id {bookingId}, отменяю бронирование");
+
+            await RejectBookingAndReleaseSeatAsync(bookingId, stoppingToken);
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {booking.Id}");
-            //Тут я не хочу отменять, так как неизвестно, по какому именно условию мы можем попасть в общий Exception, а значит сам Accept\Reject метод может дать exception
+            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {bookingId}, отменяю бронирование");
+
+            await RejectBookingAndReleaseSeatAsync(bookingId, stoppingToken);
+        }
+    }
+
+    private async Task RejectBookingAndReleaseSeatAsync(long bookingId, CancellationToken stoppingToken)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var booking = await context.Bookings
+                .FirstOrDefaultAsync(booking => booking.Id == bookingId, stoppingToken);
+
+            if (booking is null)
+                return;
+
+            var existingEvent = await context.Events
+                .FirstOrDefaultAsync(existingEvent => existingEvent.Id == booking.EventId, stoppingToken);
+
+            if (existingEvent is not null)
+                existingEvent.ReleaseSeats();
+
+            booking.Reject();
+
+            await context.SaveChangesAsync(stoppingToken);
+
+            _logger.LogInformation($"Бронь с id {booking.Id} отменена");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, $"Не удалось отменить бронь с id {bookingId} после ошибки фоновой обработки");
         }
     }
 }
