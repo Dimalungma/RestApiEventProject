@@ -59,4 +59,24 @@ public class Event
             AvailableSeats = TotalSeats;
         }
     }
+
+    public bool TryChangeTotalSeats(int newTotalSeats)
+    {
+        if (newTotalSeats <= 0)
+        {
+            return false;
+        }
+
+        var reservedSeats = TotalSeats - AvailableSeats;
+
+        if (newTotalSeats < reservedSeats)
+        {
+            return false;
+        }
+
+        TotalSeats = newTotalSeats;
+        AvailableSeats = newTotalSeats - reservedSeats;
+
+        return true;
+    }
 }

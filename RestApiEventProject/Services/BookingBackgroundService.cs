@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RestApiEventProject.DataAccess;
+using RestApiEventProject.DataAccess.Repositories;
 using RestApiEventProject.Models;
 
 namespace RestApiEventProject.Services;
@@ -9,11 +10,9 @@ public class BookingBackgroundService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BookingBackgroundService> _logger;
 
-    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5); 
     //Увеличил до 5 в рамках отладки, так как нереально отловить момент смены, сразу идет инициализация даже с Delay в 2 секунды.
+    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5); 
     private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
-
-    private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
     public BookingBackgroundService(
         IServiceScopeFactory scopeFactory,
@@ -34,12 +33,9 @@ public class BookingBackgroundService : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
 
-            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-            var pendingBookingIds = await context.Bookings
-                .Where(booking => booking.Status == BookingStatus.Pending)
-                .Select(booking => booking.Id)
-                .ToListAsync(stoppingToken);
+            var pendingBookingIds = await bookingRepository.GetPendingBookingIdsAsync(stoppingToken);
 
             var tasks = pendingBookingIds.Select(bookingId => ProcessBookingAsync(bookingId, stoppingToken));
 
@@ -55,10 +51,10 @@ public class BookingBackgroundService : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
 
-            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+            var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-            var booking = await context.Bookings
-                .FirstOrDefaultAsync(booking => booking.Id == bookingId, stoppingToken);
+            var booking = await bookingRepository.GetByIdAsync(bookingId, stoppingToken);
 
             if (booking is null)
             {
@@ -77,8 +73,7 @@ public class BookingBackgroundService : BackgroundService
             if (payment.Next(0, 6) == 5)
                 throw new PaymentRejectedException($"Бронь {booking.Id} отменена, не прошла оплата (Random)");
 
-            var existingEvent = await context.Events
-                .FirstOrDefaultAsync(existingEvent => existingEvent.Id == booking.EventId, stoppingToken);
+            var existingEvent = await eventRepository.GetByIdAsync(booking.EventId, stoppingToken);
 
             if (existingEvent is null)
             {
@@ -86,7 +81,7 @@ public class BookingBackgroundService : BackgroundService
 
                 booking.Reject();
 
-                await context.SaveChangesAsync(stoppingToken);
+                await bookingRepository.SaveChangesAsync(stoppingToken);
 
                 _logger.LogInformation($"Бронь с id {booking.Id} отменена");
 
@@ -95,7 +90,7 @@ public class BookingBackgroundService : BackgroundService
 
             booking.Confirm();
 
-            await context.SaveChangesAsync(stoppingToken);
+            await bookingRepository.SaveChangesAsync(stoppingToken);
 
             _logger.LogInformation($"Бронь с id {booking.Id} подтверждена");
         }
@@ -123,23 +118,22 @@ public class BookingBackgroundService : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
 
-            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+            var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-            var booking = await context.Bookings
-                .FirstOrDefaultAsync(booking => booking.Id == bookingId, stoppingToken);
+            var booking = await bookingRepository.GetByIdAsync(bookingId, stoppingToken);
 
             if (booking is null)
                 return;
 
-            var existingEvent = await context.Events
-                .FirstOrDefaultAsync(existingEvent => existingEvent.Id == booking.EventId, stoppingToken);
+            var existingEvent = await eventRepository.GetByIdAsync(booking.EventId, stoppingToken);
 
             if (existingEvent is not null)
                 existingEvent.ReleaseSeats();
 
             booking.Reject();
 
-            await context.SaveChangesAsync(stoppingToken);
+            await bookingRepository.SaveChangesAsync(stoppingToken);
 
             _logger.LogInformation($"Бронь с id {booking.Id} отменена");
         }

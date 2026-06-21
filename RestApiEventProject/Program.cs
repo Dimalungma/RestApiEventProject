@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RestApiEventProject;
 using RestApiEventProject.DataAccess;
+using RestApiEventProject.DataAccess.Repositories;
 using RestApiEventProject.Middleware;
 using RestApiEventProject.Services;
 using System.Reflection;
@@ -25,14 +26,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+//Репозитории
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
-builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<BookingService>();
-builder.Services.AddScoped<IBookingService>(p => p.GetRequiredService<BookingService>());
-builder.Services.AddScoped<IBookingProcessingService>(p => p.GetRequiredService<BookingService>());
+//Сервисы
+builder.Services.AddScoped<IEventService, EventService>(); 
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();
 
-
+//Мапперы
 builder.Services.AddSingleton<IEventMapper, EventMapper>();
 builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
 

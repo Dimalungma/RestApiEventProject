@@ -1,22 +1,27 @@
-﻿using RestApiEventProject.DataAccess;
+﻿using Microsoft.EntityFrameworkCore;
+using RestApiEventProject.DataAccess.Repositories;
 using RestApiEventProject.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace RestApiEventProject.Services;
 
 /// <summary>
 /// Сервис для работы с бронированиями мероприятий.
 /// </summary>
-public class BookingService : IBookingService, IBookingProcessingService
+public class BookingService : IBookingService
 {
-    private readonly AppDbContext _context;
+    private readonly IEventRepository _eventRepository;
+    private readonly IBookingRepository _bookingRepository;
 
     private static readonly SemaphoreSlim BookingSemaphore = new(1, 1);
 
-    public BookingService(AppDbContext context)
+    public BookingService(
+        IEventRepository eventRepository,
+        IBookingRepository bookingRepository)
     {
-        _context = context;
+        _eventRepository = eventRepository;
+        _bookingRepository = bookingRepository;
     }
+
 
     public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId)
     {
@@ -25,7 +30,8 @@ public class BookingService : IBookingService, IBookingProcessingService
 
         try
         {
-            var existingEvent = await _context.Events.FindAsync(eventId);
+            var existingEvent = await _eventRepository.GetByIdAsync(eventId);
+
             if (existingEvent is null)
             {
                 return (null, BookingCreateError.EventNotFound);
@@ -36,16 +42,13 @@ public class BookingService : IBookingService, IBookingProcessingService
                 return (null, BookingCreateError.NoAvailableSeats);
             }
 
-            var lastId = await _context.Bookings
-                .OrderByDescending(b => b.Id)
-                .Select(b => b.Id)
-                .FirstOrDefaultAsync();
+            var lastId = await _bookingRepository.GetLastIdAsync();
 
             var booking = Booking.CreatePending(lastId + 1, eventId);
 
-            _context.Bookings.Add(booking);
+            await _bookingRepository.AddAsync(booking);
 
-            await _context.SaveChangesAsync();
+            await _bookingRepository.SaveChangesAsync();
 
             return (booking, null);
         }
@@ -57,50 +60,6 @@ public class BookingService : IBookingService, IBookingProcessingService
 
     public async Task<Booking?> GetBookingByIdAsync(long bookingId)
     {
-        return await _context.Bookings.FindAsync(bookingId);
-    }
-
-    //Вынес в отдельный интерфейс, чтобы потом можно было красиво разделить при переходе на EF, а сейчас не снимать private с _bookings
-
-    [Obsolete]
-    public async Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync()
-    {
-        return await _context.Bookings
-            .Where(booking => booking.Status == BookingStatus.Pending)
-            .ToListAsync();
-    }
-
-    [Obsolete]
-    public async Task<bool> ConfirmBookingAsync(long bookingId)
-    {
-        var booking = await _context.Bookings.FindAsync(bookingId);
-
-        if (booking is null)
-        {
-            return false;
-        }
-
-        booking.Confirm();
-
-        await _context.SaveChangesAsync();
-
-        return true;
-    }
-
-    [Obsolete]
-    public async Task<bool> RejectBookingAsync(long bookingId)
-    {
-        var booking = await _context.Bookings.FindAsync(bookingId);
-
-        if (booking is null)
-        {
-            return false;
-        }
-
-        booking.Reject();
-
-        await _context.SaveChangesAsync();
-
-        return true;
+        return await _bookingRepository.GetByIdAsync(bookingId);
     }
 }

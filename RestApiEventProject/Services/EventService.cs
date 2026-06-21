@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestApiEventProject.DataAccess;
+using RestApiEventProject.DataAccess.Repositories;
 using RestApiEventProject.Models;
 using RestApiEventProject.Queries;
 
@@ -7,102 +7,72 @@ namespace RestApiEventProject.Services;
 
 public class EventService : IEventService
 {
-    private readonly AppDbContext _context;
-    public EventService(AppDbContext context)
+    private readonly IEventRepository _eventRepository;
+
+    public EventService(IEventRepository eventRepository)
     {
-        _context = context;
+        _eventRepository = eventRepository;
     }
 
     public async Task<PaginatedResult<Event>> GetAllAsync(GetEventsQuery query)
     {
-        IQueryable<Event> queryable = _context.Events;
-
-        if (!string.IsNullOrWhiteSpace(query.Title))
-        {
-            queryable = queryable.Where(e => EF.Functions.ILike(e.Title, $"%{query.Title}%"));
-        }
-
-        if (query.From.HasValue)
-        {
-            queryable = queryable.Where(e => e.StartAt >= query.From.Value);
-        }
-
-        if (query.To.HasValue)
-        {
-            queryable = queryable.Where(e => e.EndAt <= query.To.Value);
-        }
-
-        var totalCount = await queryable.CountAsync();
-
-        var pagedEvents = await queryable
-            .OrderBy(e => e.Id)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync();
-
-        return new PaginatedResult<Event>
-        {
-            TotalCount = totalCount,
-            Page = query.Page,
-            CurrentItemCount = pagedEvents.Count,
-            Items = pagedEvents.AsReadOnly()
-        };
+        return await _eventRepository.GetAllAsync(query);
     }
 
     public async Task<Event?> GetByIdAsync(int id)
     {
-        return await _context.Events.FindAsync(id);
+        return await _eventRepository.GetByIdAsync(id);
     }
 
     public async Task<Event> CreateAsync(Event eventItem)
     {
-        var lastId = await _context.Events
-            .OrderByDescending(e => e.Id)
-            .Select(e => e.Id)
-            .FirstOrDefaultAsync();
+        var lastId = await _eventRepository.GetLastIdAsync();
 
         eventItem.Id = lastId + 1; //Пока оставлю управление номером id в коде
 
-        _context.Events.Add(eventItem);
+        await _eventRepository.AddAsync(eventItem);
 
-        await _context.SaveChangesAsync();
+        await _eventRepository.SaveChangesAsync();
 
         return eventItem;
     }
 
-    public async Task<bool> UpdateAsync(int id, Event eventItem)
+    public async Task<EventUpdateResult> UpdateAsync(int id, Event eventItem)
     {
-        var existingEvent = await _context.Events.FindAsync(id);
+        var existingEvent = await _eventRepository.GetByIdAsync(id);
 
         if (existingEvent is null)
         {
-            return false;
+            return EventUpdateResult.NotFound;
         }
 
         existingEvent.Title = eventItem.Title;
         existingEvent.Description = eventItem.Description;
         existingEvent.StartAt = eventItem.StartAt;
         existingEvent.EndAt = eventItem.EndAt;
-        existingEvent.TotalSeats = eventItem.TotalSeats;
-        existingEvent.AvailableSeats = eventItem.AvailableSeats;
+        if (!existingEvent.TryChangeTotalSeats(eventItem.TotalSeats))
+        {
+            return EventUpdateResult.TotalSeatsLessThanReserved;
+        }
 
-        await _context.SaveChangesAsync();
+        // Тут специально не трогаю AvailableSeats.
+        await _eventRepository.SaveChangesAsync();
 
-        return true;
+        return EventUpdateResult.Success;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
-        var existingEvent = await _context.Events.FindAsync(id);
+        var existingEvent = await _eventRepository.GetByIdAsync(id);
 
         if (existingEvent is null)
         {
             return false;
         }
 
-        _context.Events.Remove(existingEvent);
+        _eventRepository.Delete(existingEvent);
 
-        await _context.SaveChangesAsync();
+        await _eventRepository.SaveChangesAsync();
 
         return true;
     }
