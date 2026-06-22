@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using RestApiEventProject.Extensions;
 using RestApiEventProject.Models;
 using RestApiEventProject.Queries;
 
@@ -24,12 +25,17 @@ public class EventRepository : IEventRepository
 
         if (query.From.HasValue)
         {
-            queryable = queryable.Where(e => e.StartAt >= query.From.Value);
+            var from = query.From.Value.ToUtcNormalized(); //Забыл про то, что напрямую EF кастомные функции не применит
+
+            queryable = queryable.Where(e => e.StartAt >= from);
         }
 
         if (query.To.HasValue)
         {
-            queryable = queryable.Where(e => e.EndAt <= query.To.Value);
+            var to = query.To.Value.ToUtcNormalized(); //Забыл про то, что напрямую EF кастомные функции не применит, le упс
+
+            queryable = queryable.Where(e => e.EndAt <= to);
+
         }
 
         var totalCount = await queryable.CountAsync(cancellationToken);
