@@ -1,4 +1,5 @@
 ﻿using RestApiEventProject.DTO;
+using RestApiEventProject.Extensions;
 using RestApiEventProject.Models;
 
 namespace RestApiEventProject.Services;
@@ -10,8 +11,8 @@ public class EventMapper : IEventMapper
         return new Event(
             dto.Title,
             dto.Description,
-            dto.StartAt,
-            dto.EndAt,
+            dto.StartAt.ToUtcNormalized(),
+            dto.EndAt.ToUtcNormalized(),
             dto.TotalSeats);
     }
 
@@ -20,8 +21,8 @@ public class EventMapper : IEventMapper
         return new Event(
             dto.Title,
             dto.Description,
-            dto.StartAt,
-            dto.EndAt,
+            dto.StartAt.ToUtcNormalized(),
+            dto.EndAt.ToUtcNormalized(),
             dto.TotalSeats);
     }
 

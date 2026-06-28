@@ -11,7 +11,7 @@ public interface IEventService
 
     Task<Event> CreateAsync(Event eventItem);
 
-    Task<bool> UpdateAsync(int id, Event eventItem);
+    Task<EventUpdateResult> UpdateAsync(int id, Event eventItem);
 
     Task<bool> DeleteAsync(int id);
 }

@@ -86,16 +86,19 @@ public class EventsController : ControllerBase
     /// <returns></returns>
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
         var updateevent = _eventMapper.ToEntity(eventItem);
-        //TODO добавить обработку ситуации, что новый totalSeats<availableSeats, и как вообще обновлять число доступных мест
-        if (await _eventService.UpdateAsync(id, updateevent))
-            return NoContent();
-        else
-            return NotFound();
+        var result = await _eventService.UpdateAsync(id, updateevent);
+        return result switch
+        {
+            EventUpdateResult.Success => NoContent(),
+            EventUpdateResult.NotFound => NotFound(),
+            EventUpdateResult.TotalSeatsLessThanReserved => Conflict("Нельзя уменьшить TotalSeats ниже количества уже занятых мест"),
+            _ => StatusCode(StatusCodes.Status500InternalServerError)
+        };
     }
     /// <summary>
     /// Удалить существующее меропрятие

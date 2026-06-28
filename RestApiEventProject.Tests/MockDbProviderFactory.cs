@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RestApiEventProject.DataAccess;
+using RestApiEventProject.DataAccess.Repositories;
 using RestApiEventProject.Services;
 
 namespace RestApiProject.Tests;
@@ -17,12 +18,10 @@ internal static class TestServiceProviderFactory //MockDbProviderFactory
             options.UseInMemoryDatabase(dbName));
 
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
 
-        services.AddScoped<BookingService>();
-        services.AddScoped<IBookingService>(provider =>
-            provider.GetRequiredService<BookingService>());
-        services.AddScoped<IBookingProcessingService>(provider =>
-            provider.GetRequiredService<BookingService>());
+        services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IBookingRepository, BookingRepository>();
 
         return services.BuildServiceProvider();
     }
