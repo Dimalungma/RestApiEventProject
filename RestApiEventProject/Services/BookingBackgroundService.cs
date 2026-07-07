@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestApiEventProject.DataAccess;
-using RestApiEventProject.DataAccess.Repositories;
-using RestApiEventProject.Models;
+using RestApiEventProject.Application;
 
-namespace RestApiEventProject.Services;
+namespace RestApiEventProject.Presentation.Services;
 
 public class BookingBackgroundService : BackgroundService
 {

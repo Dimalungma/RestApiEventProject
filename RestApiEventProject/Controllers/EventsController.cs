@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using RestApiEventProject.DTO;
-using RestApiEventProject.Models;
-using RestApiEventProject.Queries;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
 
-namespace RestApiEventProject.Controllers;
+namespace RestApiEventProject.Presentation.Controllers;
 
 /// <summary>
 /// CRUD операции для управления мероприятиями
@@ -96,7 +93,8 @@ public class EventsController : ControllerBase
         {
             EventUpdateResult.Success => NoContent(),
             EventUpdateResult.NotFound => NotFound(),
-            EventUpdateResult.TotalSeatsLessThanReserved => Conflict("Нельзя уменьшить TotalSeats ниже количества уже занятых мест"),
+            EventUpdateResult.InvalidTotalSeats => BadRequest("Некорректное число мест"),
+            EventUpdateResult.TotalSeatsLessThanReservedSeats => Conflict("Нельзя уменьшить TotalSeats ниже количества уже занятых мест"),
             _ => StatusCode(StatusCodes.Status500InternalServerError)
         };
     }

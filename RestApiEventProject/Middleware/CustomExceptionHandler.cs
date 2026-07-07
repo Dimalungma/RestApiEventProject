@@ -1,7 +1,7 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
-namespace RestApiEventProject.Middleware;
+namespace RestApiEventProject.Presentation.Middleware;
 /// <summary>
 /// Middleware для обработки исключений, использует ProblemDetails
 /// </summary>

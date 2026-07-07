@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using RestApiEventProject;
-using RestApiEventProject.DataAccess;
-using RestApiEventProject.DataAccess.Repositories;
-using RestApiEventProject.Middleware;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
+using RestApiEventProject.Infrastructure.DataAccess;
+using RestApiEventProject.Presentation.Extensions;
+using RestApiEventProject.Presentation.Middleware;
+using RestApiEventProject.Presentation.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
