@@ -31,13 +31,6 @@ public class BookingRepository : IBookingRepository
         await _context.Bookings.AddAsync(booking, cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<Booking>> GetPendingBookingsAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Bookings
-            .Where(booking => booking.Status == BookingStatus.Pending)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<IReadOnlyCollection<long>> GetPendingBookingIdsAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Bookings
