@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RestApiEventProject.DataAccess;
-using RestApiEventProject.DataAccess.Repositories;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
+using RestApiEventProject.Infrastructure.DataAccess;
 
 namespace RestApiProject.Tests;
 

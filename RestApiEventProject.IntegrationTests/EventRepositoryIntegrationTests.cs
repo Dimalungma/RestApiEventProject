@@ -1,7 +1,7 @@
-﻿using RestApiEventProject.DataAccess.Repositories;
+﻿using RestApiEventProject.Application;
+using RestApiEventProject.Domain;
+using RestApiEventProject.Infrastructure.DataAccess;
 using RestApiEventProject.IntegrationTests.Infrastructure;
-using RestApiEventProject.Models;
-using RestApiEventProject.Queries;
 
 namespace RestApiEventProject.IntegrationTests;
 

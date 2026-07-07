@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using RestApiEventProject.Models;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
+using RestApiEventProject.Domain;
 
 namespace RestApiProject.Tests;
 
