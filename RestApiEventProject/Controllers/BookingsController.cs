@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using RestApiEventProject.DTO;
-using RestApiEventProject.Models;
-using RestApiEventProject.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using RestApiEventProject.Application;
 
-namespace RestApiEventProject.Controllers;
+namespace RestApiEventProject.Presentation.Controllers;
 
 /// <summary>
 /// Операции для управления бронированиями мероприятий

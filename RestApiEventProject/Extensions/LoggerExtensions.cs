@@ -1,5 +1,6 @@
 ﻿using Serilog;
-namespace RestApiEventProject;
+
+namespace RestApiEventProject.Presentation.Extensions;
 
 public static class LoggerExtensions
 {

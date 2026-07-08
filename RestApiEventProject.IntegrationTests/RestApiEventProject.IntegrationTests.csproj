@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RestApiEventProject\RestApiEventProject.csproj" />
+    <ProjectReference Include="..\RestApiEventProject\RestApiEventProject.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

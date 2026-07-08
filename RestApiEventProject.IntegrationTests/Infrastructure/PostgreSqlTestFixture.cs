@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RestApiEventProject.DataAccess;
+using RestApiEventProject.Infrastructure.DataAccess;
 using Testcontainers.PostgreSql;
 
 namespace RestApiEventProject.IntegrationTests.Infrastructure;
@@ -10,7 +10,7 @@ public sealed class PostgreSqlTestFixture : IAsyncLifetime
         .WithImage("postgres:16-alpine")
         .WithDatabase("eventapi_tests")
         .WithUsername("postgres")
-        .WithPassword("postgres") //TODO заменить пароль на ожидаемый ревьюром, а то меня завернут))
+        .WithPassword("postgres") //TODO хранить как секрет, так как у меня другой пароль и я задолбался туда-сюда прятать\восстанавливать изменения
         .Build();
 
     public async Task InitializeAsync()

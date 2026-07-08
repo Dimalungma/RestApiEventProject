@@ -1,9 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using RestApiEventProject.DataAccess.Repositories;
-using RestApiEventProject.Models;
-using RestApiEventProject.Queries;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
+using RestApiEventProject.Domain;
 
 namespace RestApiProject.Tests;
 
@@ -281,7 +279,7 @@ public class EventServiceTests
             var storedEvent = await service.GetByIdAsync(eventId);
 
             // Assert
-            updateResult.Should().Be(EventUpdateResult.TotalSeatsLessThanReserved);
+            updateResult.Should().Be(EventUpdateResult.TotalSeatsLessThanReservedSeats);
 
             storedEvent.Should().NotBeNull();
             storedEvent!.Title.Should().Be("Событие");

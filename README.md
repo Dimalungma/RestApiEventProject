@@ -14,8 +14,100 @@
 -   бронирование события
 
 Данные приложения хранятся в **PostgreSQL**. Схема базы данных управляется через **миграции EF Core**.
+------------------------------------------------------------------------
 
-Архитектура разделена на контроллеры, сервисы, репозитории, DTO и мапперы. Репозитории отвечают за доступ к данным, сервисы содержат бизнес-логику, контроллеры обрабатывают HTTP-запросы.
+## Архитектура проекта
+
+Проект разделён на четыре слоя по принципам Clean Architecture:
+
+```text
+RestApiEventProject.Domain
+RestApiEventProject.Application
+RestApiEventProject.Infrastructure
+RestApiEventProject.Presentation
+```
+
+### Domain
+
+`RestApiEventProject.Domain` содержит предметную область приложения и не зависит от других проектов.
+
+В слой входят:
+
+- доменные сущности `Event` и `Booking`;
+- перечисление `BookingStatus`;
+- доменные результаты операций, например `ChangeTotalSeatsResult`;
+- бизнес-правила, которые относятся к самим сущностям: резервирование мест, освобождение мест, изменение общего количества мест события, подтверждение и отклонение брони.
+
+Domain не содержит зависимостей от ASP.NET Core, EF Core, PostgreSQL, DI-контейнера или других инфраструктурных технологий.
+
+### Application
+
+`RestApiEventProject.Application` содержит сценарии приложения и абстракции, необходимые для их выполнения. Слой зависит только от `Domain`.
+
+В слой входят:
+
+- сервисы/use cases: `EventService`, `BookingService`, `BookingProcessingService`;
+- интерфейсы сервисов;
+- интерфейсы портов для доступа к данным: `IEventRepository`, `IBookingRepository`;
+- DTO, query/result/common-типы;
+- мапперы;
+- extension-метод `AddApplication()` для регистрации application-зависимостей в DI.
+
+Application не зависит от Infrastructure и не содержит реализаций EF Core или других внешних технологий.
+
+### Infrastructure
+
+`RestApiEventProject.Infrastructure` содержит реализации портов и код, зависящий от внешних технологий.
+
+В слой входят:
+
+- `AppDbContext`;
+- EF Core configuration-классы;
+- реализации репозиториев `EventRepository` и `BookingRepository`;
+- миграции EF Core;
+- extension-метод `AddInfrastructure(...)` для регистрации DbContext и инфраструктурных реализаций;
+- helper для применения миграций при запуске приложения.
+
+Infrastructure зависит от `Application` и `Domain`.
+
+### Presentation
+
+`RestApiEventProject.Presentation` содержит HTTP-обвязку приложения и composition root.
+
+В слой входят:
+
+- контроллеры;
+- middleware глобальной обработки исключений;
+- `Program.cs`;
+- настройки приложения;
+- hosted service-обвязка для фоновой обработки бронирований.
+
+Контроллеры принимают HTTP-запросы, вызывают сервисы из Application и маппят результаты use case в HTTP-ответы. Бизнес-логика в контроллерах не размещается.
+
+`Program.cs` регистрирует зависимости через extension-методы `AddApplication()` и `AddInfrastructure(...)`.
+
+## Зависимости между проектами
+
+Зависимости направлены внутрь:
+
+```text
+Domain
+↑
+Application
+↑
+Infrastructure
+
+Presentation → Application
+Presentation → Infrastructure
+```
+
+Правила зависимостей:
+
+- `Domain` ни от чего не зависит;
+- `Application` зависит только от `Domain`;
+- `Infrastructure` зависит от `Application` и `Domain`;
+- `Presentation` зависит от `Application` и `Infrastructure`;
+- `Application` не должен ссылаться на `Infrastructure`.
 
 ------------------------------------------------------------------------
 
@@ -86,25 +178,27 @@ dotnet run
 
 ## Миграции EF Core
 
-Схема базы данных управляется миграциями EF Core.
+После переноса `AppDbContext` и миграций в `RestApiEventProject.Infrastructure` команды EF Core нужно выполнять с указанием проекта миграций и startup-проекта.
 
 Создать новую миграцию:
 
 ```bash
-dotnet ef migrations add MigrationName --project RestApiEventProject --startup-project RestApiEventProject
+dotnet ef migrations add MigrationName --project RestApiEventProject.Infrastructure --startup-project RestApiEventProject.Presentation
 ```
 
 Применить миграции вручную:
 
 ```bash
-dotnet ef database update --project RestApiEventProject --startup-project RestApiEventProject
+dotnet ef database update --project RestApiEventProject.Infrastructure --startup-project RestApiEventProject.Presentation
 ```
 
-В текущей реализации миграции также применяются автоматически при запуске приложения:
+Где:
 
-```csharp
-db.Database.Migrate();
-```
+- `--project RestApiEventProject.Infrastructure` — проект, в котором находится `AppDbContext` и хранятся миграции;
+- `--startup-project RestApiEventProject.Presentation` — запускаемый проект, из которого берутся конфигурация, строка подключения и DI-настройки.
+
+При обычном запуске приложения миграции применяются автоматически через infrastructure helper, вызываемый из `Program.cs`.
+
 
 ---
 

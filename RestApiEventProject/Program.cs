@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using RestApiEventProject;
-using RestApiEventProject.DataAccess;
-using RestApiEventProject.DataAccess.Repositories;
-using RestApiEventProject.Middleware;
-using RestApiEventProject.Services;
+using RestApiEventProject.Application;
+using RestApiEventProject.Infrastructure;
+using RestApiEventProject.Infrastructure.DataAccess;
+using RestApiEventProject.Presentation.Extensions;
+using RestApiEventProject.Presentation.Middleware;
+using RestApiEventProject.Presentation.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,37 +22,26 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+//Теперь все DI по слоям в отдельных проектах, смотрите в них
+builder.Services.AddApplication();
 
-//Репозитории
-builder.Services.AddScoped<IEventRepository, EventRepository>();
-builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddInfrastructure(builder.Configuration);
 
-//Сервисы
-builder.Services.AddScoped<IEventService, EventService>(); 
-builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();
 
-//Мапперы
-builder.Services.AddSingleton<IEventMapper, EventMapper>();
-builder.Services.AddSingleton<IBookingMapper, BookingMapper>();
-
-
 var app = builder.Build();
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
+
+app.Services.ApplyDatabaseMigrations();
+
 app.UseMiddleware<CustomExceptionHandler>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
     app.UseSwagger();
+
     app.UseSwaggerUI();
 }
 
