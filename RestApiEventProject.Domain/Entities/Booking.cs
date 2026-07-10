@@ -5,11 +5,16 @@ public class Booking
     private Booking()
     {
         Event = null!;
+        User = null!;
     }
     public long Id { get; set; }
 
     public int EventId { get; set; }
     public Event Event { get; set; }
+
+    public long UserId { get; set; }
+
+    public User User { get; set; }
 
     private BookingStatus _status;
     public BookingStatus Status => _status;
@@ -18,13 +23,14 @@ public class Booking
 
     public DateTime? ProcessedAt { get; set; }
 
-    //Чтобы было что тестировать
-    public static Booking CreatePending(long id, int eventId)
+    //Create для упрощения инициализации и тестирования
+    public static Booking CreatePending(long id, int eventId, long userId)
     {
         return new Booking
         {
             Id = id,
             EventId = eventId,
+            UserId = userId,
             _status = BookingStatus.Pending,
             CreatedAt = DateTime.UtcNow,
             ProcessedAt = null
@@ -41,5 +47,18 @@ public class Booking
     {
         _status = BookingStatus.Rejected;
         ProcessedAt = DateTime.UtcNow;
+    }
+
+    public bool Cancel()
+    {
+        if (_status == BookingStatus.Cancelled) //От повторных перезаписей и освобождения лишних мест
+        {
+            return false;
+        }
+
+        _status = BookingStatus.Cancelled;
+        ProcessedAt = DateTime.UtcNow;
+
+        return true;
     }
 }
