@@ -24,11 +24,10 @@ public class Booking
     public DateTime? ProcessedAt { get; set; }
 
     //Create для упрощения инициализации и тестирования
-    public static Booking CreatePending(long id, int eventId, long userId)
+    public static Booking CreatePending( int eventId, long userId)
     {
         return new Booking
         {
-            Id = id,
             EventId = eventId,
             UserId = userId,
             _status = BookingStatus.Pending,

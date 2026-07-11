@@ -13,7 +13,7 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasKey(b => b.Id);
 
         builder.Property(b => b.Id)
-            .ValueGeneratedNever(); //Учитывая что я отказался от guid, возможно стоит дать автогенерацию
+            .UseIdentityByDefaultColumn();
 
         builder.Property(b => b.EventId)
             .IsRequired();

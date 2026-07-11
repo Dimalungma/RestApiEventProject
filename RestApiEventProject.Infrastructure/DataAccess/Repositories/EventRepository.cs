@@ -59,14 +59,6 @@ public class EventRepository : IEventRepository
         return await _context.Events.FindAsync([id], cancellationToken);
     }
 
-    public async Task<int> GetLastIdAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Events
-            .OrderByDescending(e => e.Id)
-            .Select(e => e.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     public async Task AddAsync(Event eventItem, CancellationToken cancellationToken = default)
     {
         await _context.Events.AddAsync(eventItem, cancellationToken);

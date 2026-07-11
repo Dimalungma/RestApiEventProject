@@ -18,14 +18,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings.FindAsync([id], cancellationToken);
     }
 
-    public async Task<long> GetLastIdAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Bookings
-            .OrderByDescending(booking => booking.Id)
-            .Select(booking => booking.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     public async Task AddAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _context.Bookings.AddAsync(booking, cancellationToken);

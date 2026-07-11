@@ -13,7 +13,7 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
         builder.HasKey(e => e.Id);
 
         builder.Property(e => e.Id)
-            .ValueGeneratedNever(); //Учитывая что я отказался от guid, возможно стоит дать автогенерацию
+            .UseIdentityByDefaultColumn();
 
         builder.Property(e => e.Title)
             .IsRequired()

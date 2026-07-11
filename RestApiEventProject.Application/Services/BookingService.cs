@@ -53,9 +53,7 @@ public class BookingService : IBookingService
                 return (null, BookingCreateError.NoAvailableSeats);
             }
 
-            var lastId = await _bookingRepository.GetLastIdAsync();
-
-            var booking = Booking.CreatePending(lastId + 1, eventId, userId);
+            var booking = Booking.CreatePending(eventId, userId);
 
             await _bookingRepository.AddAsync(booking);
 
