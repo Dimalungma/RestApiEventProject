@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RestApiEventProject.Application;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace RestApiEventProject.Presentation.Controllers;
 
@@ -7,6 +9,8 @@ namespace RestApiEventProject.Presentation.Controllers;
 /// Операции для управления бронированиями мероприятий
 /// </summary>
 [ApiController]
+[Authorize]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)] //Весь эндпоинт под авторизацией, и все новые запросы скорее всего тоже будут
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
@@ -32,9 +36,15 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CreateBooking(int id, [FromQuery] long userId) //Промежуточно для тестов. TODO заменить на JWT Claims
+    public async Task<IActionResult> CreateBooking(int id)
     {
-        var (booking, error) = await _bookingService.CreateBookingAsync(id, userId);
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var (booking, error) =
+            await _bookingService.CreateBookingAsync(id, userId);
 
         if (error == BookingCreateError.EventNotFound)
         {
@@ -81,13 +91,19 @@ public class BookingsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CancelBooking(
-        long id,
-        [FromQuery] long userId) //Промежуточно для тестов. TODO заменить на JWT Claims
+    public async Task<IActionResult> CancelBooking(long id)
     {
+        if (!TryGetCurrentUserId(out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var isAdmin = User.IsInRole("Admin"); //Не знаю, как лучше, передавать строку внутрь application и парсить там, или здесь
+
         var error = await _bookingService.CancelBookingAsync(
             id,
-            userId, false); //TODO похоже claims вообще надо будет передавать в сервис, потому что presentation не знает о доменной роли
+            userId,
+            isAdmin);
 
         if (error == BookingCancelError.BookingNotFound)
         {
@@ -120,5 +136,13 @@ public class BookingsController : ControllerBase
         return Ok(_bookingMapper.ToResponseDto(booking));
     }
 
-#pragma warning disable CS1591 //Тут мб приватные методы
+#pragma warning disable CS1591 //Ниже приватные методы
+
+    private bool TryGetCurrentUserId(out long userId)
+    {
+        var userIdClaim =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return long.TryParse(userIdClaim, out userId);
+    }
 }
