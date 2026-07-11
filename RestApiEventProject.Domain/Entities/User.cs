@@ -19,14 +19,12 @@ public class User
     public List<Booking> Bookings { get; set; } = []; //Чтобы сразу можно было привязать обратно 1:М бронирования к пользователю
 
     public static User Create(
-        long id,
         string login,
         string passwordHash,
         UserRole role)
     {
         return new User
         {
-            Id = id,
             Login = login,
             PasswordHash = passwordHash,
             Role = role
