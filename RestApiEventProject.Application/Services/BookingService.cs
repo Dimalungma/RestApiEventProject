@@ -70,7 +70,7 @@ public class BookingService : IBookingService
     public async Task<BookingCancelError?> CancelBookingAsync(
         long bookingId,
         long userId,
-        UserRole role)
+        bool isAdmin)
     {
         var booking = await _bookingRepository.GetByIdAsync(bookingId);
 
@@ -79,7 +79,7 @@ public class BookingService : IBookingService
             return BookingCancelError.BookingNotFound;
         }
 
-        if (role != UserRole.Admin && booking.UserId != userId) //Отменить может или сам пользователь, или администратор
+        if (!isAdmin && booking.UserId != userId) //Отменить может или сам пользователь, или администратор
         {
             return BookingCancelError.Forbidden;
         }

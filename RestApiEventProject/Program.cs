@@ -1,11 +1,14 @@
-using Microsoft.EntityFrameworkCore;
 using RestApiEventProject.Application;
 using RestApiEventProject.Infrastructure;
-using RestApiEventProject.Infrastructure.DataAccess;
 using RestApiEventProject.Presentation.Extensions;
 using RestApiEventProject.Presentation.Middleware;
 using RestApiEventProject.Presentation.Services;
 using System.Reflection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using RestApiEventProject.Infrastructure.Security;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,38 @@ builder.ConfigureLogger(); //Extension метод с конфигурацией 
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+var jwtOptions = builder.Configuration
+                     .GetRequiredSection(JwtOptions.SectionName)
+                     .Get<JwtOptions>()
+                 ?? throw new InvalidOperationException(
+                     "Не удалось загрузить настройки JWT.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -47,6 +82,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

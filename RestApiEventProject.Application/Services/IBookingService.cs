@@ -25,10 +25,10 @@ public interface IBookingService
     /// </summary>
     /// <param name="bookingId">ИД отменяемого бронирования</param>
     /// <param name="userId">ИД пользователя из claims</param>
-    /// <param name="role">Роль пользователя из claims</param>
+    /// <param name="isAdmin">Признак администратора</param>
     /// <returns></returns>
     Task<BookingCancelError?> CancelBookingAsync(
         long bookingId,
         long userId,
-        UserRole role);
+        bool isAdmin); //TODO что делать при добавлении новой роли? Перевести на string?
 }

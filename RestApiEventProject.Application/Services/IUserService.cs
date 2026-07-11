@@ -7,7 +7,7 @@ public interface IUserService
     Task<UserRegisterError?> RegisterAsync(
         string login,
         string password,
-        UserRole role,
+        bool isAdmin,
         CancellationToken cancellationToken = default);
 
     Task<(string? Token, UserLoginError? Error)> LoginAsync(

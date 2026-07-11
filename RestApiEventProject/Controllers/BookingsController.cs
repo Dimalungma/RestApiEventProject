@@ -87,8 +87,7 @@ public class BookingsController : ControllerBase
     {
         var error = await _bookingService.CancelBookingAsync(
             id,
-            userId,
-            0); //TODO похоже claims вообще надо будет передавать в сервис, потому что presentation не знает о доменной роли
+            userId, false); //TODO похоже claims вообще надо будет передавать в сервис, потому что presentation не знает о доменной роли
 
         if (error == BookingCancelError.BookingNotFound)
         {

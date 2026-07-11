@@ -23,7 +23,7 @@ public sealed class UserService : IUserService
     public async Task<UserRegisterError?> RegisterAsync(
         string login,
         string password,
-        UserRole role,
+        bool isAdmin,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(login))
@@ -51,6 +51,9 @@ public sealed class UserService : IUserService
         }
 
         var passwordHash = _passwordHasher.Hash(password);
+        var role = isAdmin //Я не уверен, как ещё разделить слои - Presentation не знает UserRole, а Application вряд ли должен знать Claims
+            ? UserRole.Admin
+            : UserRole.User;
 
         var user = User.Create(
             login,
