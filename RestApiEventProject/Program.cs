@@ -1,12 +1,13 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using RestApiEventProject.Application;
 using RestApiEventProject.Infrastructure;
+using RestApiEventProject.Infrastructure.Security;
 using RestApiEventProject.Presentation.Extensions;
 using RestApiEventProject.Presentation.Middleware;
 using RestApiEventProject.Presentation.Services;
-using System.Reflection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using RestApiEventProject.Infrastructure.Security;
+using Microsoft.OpenApi;
 using System.Security.Claims;
 using System.Text;
 
@@ -51,10 +52,20 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen(options =>
 {
-    // Путь к XML-файлу с документацией
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    options.IncludeXmlComments(xmlPath);
+    const string schemeName = "Bearer";
+
+    options.AddSecurityDefinition(schemeName, new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Введите JWT-токен без префикса Bearer"
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference(schemeName, document)] = []
+    });
 });
 
 //Теперь все DI по слоям в отдельных проектах, смотрите в них
