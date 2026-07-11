@@ -1,4 +1,5 @@
-﻿using RestApiEventProject.Application;
+﻿using Microsoft.Extensions.Logging;
+using RestApiEventProject.Application;
 using RestApiEventProject.Domain;
 using RestApiEventProject.Infrastructure.DataAccess;
 using RestApiEventProject.IntegrationTests.Infrastructure;
@@ -14,38 +15,39 @@ public class EventRepositoryIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task AddAsync_Should_Save_Event_To_PostgreSql()
     {
-        
-        await using var context = Fixture.CreateDbContext();
+        int eventId;
+
+        await using (var context = Fixture.CreateDbContext())
         {
             // Arrange
             var repository = new EventRepository(context);
 
             var eventItem = CreateEvent(
-                id: 1,
                 title: "Деловое интеграционно мероприятие аналитики",
                 description: "Сокращенно - ДИМА",
                 startAt: new DateTime(2026, 4, 10, 10, 0, 0, DateTimeKind.Utc),
                 endAt: new DateTime(2026, 4, 10, 12, 0, 0, DateTimeKind.Utc));
 
-
             // Act
             await repository.AddAsync(eventItem);
             await repository.SaveChangesAsync();
+
+            eventId = eventItem.Id;
         }
 
-        await using (var assertContext = Fixture.CreateDbContext())
-        {
-            // Assert
-            var assertRepository = new EventRepository(assertContext);
-            var savedEvent = await assertRepository.GetByIdAsync(1);
+        await using var assertContext = Fixture.CreateDbContext();
 
-            Assert.NotNull(savedEvent);
-            Assert.Equal(1, savedEvent.Id);
-            Assert.Equal("Деловое интеграционно мероприятие аналитики", savedEvent.Title);
-            Assert.Equal("Сокращенно - ДИМА", savedEvent.Description);
-            Assert.Equal(10, savedEvent.TotalSeats);
-            Assert.Equal(10, savedEvent.AvailableSeats);
-        }
+        // Assert
+        var assertRepository = new EventRepository(assertContext);
+        var savedEvent = await assertRepository.GetByIdAsync(eventId);
+
+        Assert.True(eventId > 0);
+        Assert.NotNull(savedEvent);
+        Assert.Equal(eventId, savedEvent.Id);
+        Assert.Equal("Деловое интеграционно мероприятие аналитики", savedEvent.Title);
+        Assert.Equal("Сокращенно - ДИМА", savedEvent.Description);
+        Assert.Equal(10, savedEvent.TotalSeats);
+        Assert.Equal(10, savedEvent.AvailableSeats);
     }
 
     [Fact]
@@ -63,46 +65,6 @@ public class EventRepositoryIntegrationTests : IntegrationTestBase
         Assert.Null(result);
     }
 
-    [Fact]
-    public async Task GetLastIdAsync_Should_Return_Max_Event_Id()
-    {
-        // Arrange
-        await using (var seedContext = Fixture.CreateDbContext())
-        {
-            var seedRepository = new EventRepository(seedContext);
-
-            await seedRepository.AddAsync(CreateEvent(id: 1, title: "Первое"));
-            await seedRepository.AddAsync(CreateEvent(id: 5, title: "Пятое"));
-            await seedRepository.AddAsync(CreateEvent(id: 3, title: "Третье"));
-            await seedRepository.SaveChangesAsync();
-        }
-
-        // Act
-        await using (var queryContext = Fixture.CreateDbContext())
-        {
-            var repository = new EventRepository(queryContext);
-
-            var result = await repository.GetLastIdAsync();
-
-            // Assert
-            Assert.Equal(5, result);
-        }
-    }
-
-    [Fact]
-    public async Task GetLastIdAsync_Should_Return_Zero_When_Events_Are_Empty()
-    {
-        // Arrange
-        await using var context = Fixture.CreateDbContext();
-
-        var repository = new EventRepository(context);
-
-        // Act
-        var result = await repository.GetLastIdAsync();
-
-        // Assert
-        Assert.Equal(0, result);
-    }
 
     [Fact]
     public async Task GetAllAsync_Should_Return_All_Events_When_No_Filters_Are_Passed()
@@ -342,23 +304,25 @@ public class EventRepositoryIntegrationTests : IntegrationTestBase
     [Fact]
     public async Task Delete_Should_Remove_Event_From_PostgreSql()
     {
+        int eventId;
+
         // Arrange
         await using (var seedContext = Fixture.CreateDbContext())
         {
             var seedRepository = new EventRepository(seedContext);
-
-            var eventItem = CreateEvent(id: 1, title: "На удаление");
+            var eventItem = CreateEvent(title: "На удаление");
 
             await seedRepository.AddAsync(eventItem);
             await seedRepository.SaveChangesAsync();
+
+            eventId = eventItem.Id;
         }
 
         // Act
         await using (var actContext = Fixture.CreateDbContext())
         {
             var repository = new EventRepository(actContext);
-
-            var eventItem = await repository.GetByIdAsync(1);
+            var eventItem = await repository.GetByIdAsync(eventId);
 
             Assert.NotNull(eventItem);
 
@@ -367,46 +331,39 @@ public class EventRepositoryIntegrationTests : IntegrationTestBase
         }
 
         // Assert
-        await using (var assertContext = Fixture.CreateDbContext()) //Хз, нужно ли три разных контекста, или хватит двух, но допустим перестрахуюсь
-        {
-            var assertRepository = new EventRepository(assertContext);
+        await using var assertContext = Fixture.CreateDbContext();
 
-            var result = await assertRepository.GetByIdAsync(1);
+        var assertRepository = new EventRepository(assertContext);
+        var result = await assertRepository.GetByIdAsync(eventId);
 
-            Assert.Null(result);
-        }
+        Assert.Null(result);
     }
 
     private static async Task FillEventsAsync(EventRepository repository)
     {
         await repository.AddAsync(CreateEvent(
-            id: 1,
             title: "Пресс качат",
             startAt: new DateTime(2026, 4, 10, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 4, 10, 12, 0, 0, DateTimeKind.Utc)));
 
         await repository.AddAsync(CreateEvent(
-            id: 2,
             title: "10 км бегит",
             startAt: new DateTime(2026, 4, 11, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 4, 11, 12, 0, 0, DateTimeKind.Utc),
             totalSeats: 15));
 
         await repository.AddAsync(CreateEvent(
-            id: 3,
             title: "Турник делат",
             startAt: new DateTime(2026, 4, 12, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 4, 12, 12, 0, 0, DateTimeKind.Utc)));
 
         await repository.AddAsync(CreateEvent(
-            id: 4,
             title: "Анжуманя делат",
             startAt: new DateTime(2026, 5, 13, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 5, 13, 12, 0, 0, DateTimeKind.Utc),
             totalSeats: 20));
 
         await repository.AddAsync(CreateEvent(
-            id: 5,
             title: "Словарь купит",
             startAt: new DateTime(2026, 5, 14, 10, 0, 0, DateTimeKind.Utc),
             endAt: new DateTime(2026, 5, 14, 12, 0, 0, DateTimeKind.Utc)));
@@ -415,22 +372,17 @@ public class EventRepositoryIntegrationTests : IntegrationTestBase
     }
 
     private static Event CreateEvent(
-        int id,
         string title,
         DateTime? startAt = null,
         DateTime? endAt = null,
         int totalSeats = 10,
         string? description = null)
     {
-        var eventItem = new Event(
+        return new Event(
             title,
             description,
             startAt ?? new DateTime(2026, 4, 10, 10, 0, 0, DateTimeKind.Utc),
             endAt ?? new DateTime(2026, 4, 10, 12, 0, 0, DateTimeKind.Utc),
             totalSeats);
-
-        eventItem.Id = id;
-
-        return eventItem;
     }
 }
