@@ -10,7 +10,6 @@ public class BookingService : IBookingService
     private readonly IBookingRepository _bookingRepository;
 
     private static readonly SemaphoreSlim BookingSemaphore = new(1, 1);
-    private const int MaxActiveBookingsPerUser = 10;
 
     public BookingService(
         IEventRepository eventRepository,
@@ -43,7 +42,7 @@ public class BookingService : IBookingService
             var activeBookingsCount =
                 await _bookingRepository.GetActiveBookingsCountByUserIdAsync(userId); //TODO метод проверки броней
 
-            if (activeBookingsCount >= MaxActiveBookingsPerUser)
+            if (activeBookingsCount >= BookingConstants.MaxActiveBookingsPerUser)
             {
                 return (null, BookingCreateError.ActiveBookingsLimitExceeded);
             }

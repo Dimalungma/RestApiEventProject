@@ -74,7 +74,7 @@ public class BookingsController : ControllerBase
             {
                 Status = StatusCodes.Status409Conflict,
                 Title = "Active bookings limit exceeded",
-                Detail = "Пользователь не может иметь больше 10 активных бронирований."
+                Detail = $"Пользователь не может иметь больше {BookingConstants.MaxActiveBookingsPerUser} активных бронирований."
             });
         }
 
