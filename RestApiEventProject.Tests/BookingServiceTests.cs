@@ -540,6 +540,144 @@ public class BookingServiceTests
         secondUserBookings.Should().Be(1);
     }
 
+    [Fact]
+    public async Task CancelBookingAsync_Should_Return_Forbidden_When_User_Cancels_Another_Users_Booking()
+    {
+        // Arrange
+        const long bookingOwnerId = 1;
+        const long anotherUserId = 2;
+
+        using var provider = TestServiceProviderFactory.Create();
+        var eventItem = await CreateStoredEventAsync(provider, totalSeats: 3);
+
+        long bookingId;
+
+        using (var createScope = provider.CreateScope())
+        {
+            var bookingService = createScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            var (booking, createError) =
+                await bookingService.CreateBookingAsync(eventItem.Id, bookingOwnerId);
+
+            createError.Should().BeNull();
+            booking.Should().NotBeNull();
+
+            bookingId = booking!.Id;
+        }
+
+        using var cancelScope = provider.CreateScope();
+        var cancelBookingService = cancelScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        // Act
+        var error = await cancelBookingService.CancelBookingAsync(
+            bookingId,
+            anotherUserId,
+            isAdmin: false);
+
+        // Assert
+        error.Should().Be(BookingCancelError.Forbidden);
+
+        var storedBooking = await cancelBookingService.GetBookingByIdAsync(bookingId);
+
+        storedBooking.Should().NotBeNull();
+        storedBooking!.Status.Should().Be(BookingStatus.Pending);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Should_Cancel_Another_Users_Booking_When_User_Is_Admin()
+    {
+        // Arrange
+        const long bookingOwnerId = 1;
+        const long adminId = 2;
+
+        using var provider = TestServiceProviderFactory.Create();
+        var eventItem = await CreateStoredEventAsync(provider, totalSeats: 3);
+
+        long bookingId;
+
+        using (var createScope = provider.CreateScope())
+        {
+            var bookingService = createScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            var (booking, createError) =
+                await bookingService.CreateBookingAsync(eventItem.Id, bookingOwnerId);
+
+            createError.Should().BeNull();
+            booking.Should().NotBeNull();
+
+            bookingId = booking!.Id;
+        }
+
+        using (var cancelScope = provider.CreateScope())
+        {
+            var bookingService = cancelScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            // Act
+            var error = await bookingService.CancelBookingAsync(
+                bookingId,
+                adminId,
+                isAdmin: true);
+
+            // Assert
+            error.Should().BeNull();
+        }
+
+        using var checkScope = provider.CreateScope();
+
+        var checkBookingService = checkScope.ServiceProvider.GetRequiredService<IBookingService>();
+        var eventService = checkScope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var storedBooking = await checkBookingService.GetBookingByIdAsync(bookingId);
+        var storedEvent = await eventService.GetByIdAsync(eventItem.Id);
+
+        storedBooking.Should().NotBeNull();
+        storedBooking!.Status.Should().Be(BookingStatus.Cancelled);
+        storedEvent.Should().NotBeNull();
+        storedEvent!.AvailableSeats.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task CancelBookingAsync_Should_Cancel_Own_Booking_When_User_Is_Not_Admin()
+    {
+        // Arrange
+        const long userId = 1;
+
+        using var provider = TestServiceProviderFactory.Create();
+        var eventItem = await CreateStoredEventAsync(provider, totalSeats: 3);
+
+        long bookingId;
+
+        using (var createScope = provider.CreateScope())
+        {
+            var bookingService = createScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+            var (booking, createError) =
+                await bookingService.CreateBookingAsync(eventItem.Id, userId);
+
+            createError.Should().BeNull();
+            booking.Should().NotBeNull();
+
+            bookingId = booking!.Id;
+        }
+
+        using var cancelScope = provider.CreateScope();
+        var cancelBookingService = cancelScope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        // Act
+        var error = await cancelBookingService.CancelBookingAsync(
+            bookingId,
+            userId,
+            isAdmin: false);
+
+        // Assert
+        error.Should().BeNull();
+
+        var storedBooking = await cancelBookingService.GetBookingByIdAsync(bookingId);
+
+        storedBooking.Should().NotBeNull();
+        storedBooking!.Status.Should().Be(BookingStatus.Cancelled);
+    }
+
 
     private static async Task<Event> CreateStoredEventAsync(
         ServiceProvider provider,
