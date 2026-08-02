@@ -8,8 +8,6 @@ public interface IEventRepository
 
     Task<Event?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
-    Task<int> GetLastIdAsync(CancellationToken cancellationToken = default);
-
     Task AddAsync(Event eventItem, CancellationToken cancellationToken = default);
 
     void Delete(Event eventItem);

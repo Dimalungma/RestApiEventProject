@@ -20,7 +20,7 @@ public class BookingService : IBookingService
     }
 
 
-    public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId)
+    public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId, long userId)
     {
         
         await BookingSemaphore.WaitAsync();
@@ -34,14 +34,25 @@ public class BookingService : IBookingService
                 return (null, BookingCreateError.EventNotFound);
             }
 
+            if (existingEvent.StartAt <= DateTime.UtcNow)
+            {
+                return (null, BookingCreateError.EventAlreadyStarted);
+            }
+
+            var activeBookingsCount =
+                await _bookingRepository.GetActiveBookingsCountByUserIdAsync(userId); //TODO метод проверки броней
+
+            if (activeBookingsCount >= BookingConstants.MaxActiveBookingsPerUser)
+            {
+                return (null, BookingCreateError.ActiveBookingsLimitExceeded);
+            }
+
             if (!existingEvent.TryReserveSeats())
             {
                 return (null, BookingCreateError.NoAvailableSeats);
             }
 
-            var lastId = await _bookingRepository.GetLastIdAsync();
-
-            var booking = Booking.CreatePending(lastId + 1, eventId);
+            var booking = Booking.CreatePending(eventId, userId);
 
             await _bookingRepository.AddAsync(booking);
 
@@ -53,6 +64,42 @@ public class BookingService : IBookingService
         {
             BookingSemaphore.Release();
         }
+    }
+
+    public async Task<BookingCancelError?> CancelBookingAsync(
+        long bookingId,
+        long userId,
+        bool isAdmin)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+
+        if (booking is null)
+        {
+            return BookingCancelError.BookingNotFound;
+        }
+
+        if (!isAdmin && booking.UserId != userId) //Отменить может или сам пользователь, или администратор
+        {
+            return BookingCancelError.Forbidden;
+        }
+
+        var wasCancelled = booking.Cancel();
+
+        if (!wasCancelled) //Если уже отменена раньше, и текущая проверка ничего не поменяла, освобождать места нельзя
+        {
+            return null;
+        }
+
+        var existingEvent = await _eventRepository.GetByIdAsync(booking.EventId);
+
+        if (existingEvent is not null)
+        {
+            existingEvent.ReleaseSeats(1); //TODO а у нас может один юзер забронировать сразу много мест?
+        }
+
+        await _bookingRepository.SaveChangesAsync();
+
+        return null;
     }
 
     public async Task<Booking?> GetBookingByIdAsync(long bookingId)

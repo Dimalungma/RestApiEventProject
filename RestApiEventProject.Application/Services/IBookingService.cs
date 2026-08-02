@@ -11,7 +11,7 @@ public interface IBookingService
     /// </summary>
     /// <param name="eventId">Идентификатор мероприятия.</param>
     /// <returns>Информация о созданной брони.</returns>
-    Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId);
+    Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId, long userId);
 
     /// <summary>
     /// Возвращает бронь по её идентификатору.
@@ -19,4 +19,16 @@ public interface IBookingService
     /// <param name="bookingId">Идентификатор брони.</param>
     /// <returns>Информация о брони или null, если бронь не найдена.</returns>
     Task<Booking?> GetBookingByIdAsync(long bookingId);
+
+    /// <summary>
+    /// Отменяет бронь на мероприятие
+    /// </summary>
+    /// <param name="bookingId">ИД отменяемого бронирования</param>
+    /// <param name="userId">ИД пользователя из claims</param>
+    /// <param name="isAdmin">Признак администратора</param>
+    /// <returns></returns>
+    Task<BookingCancelError?> CancelBookingAsync(
+        long bookingId,
+        long userId,
+        bool isAdmin); //TODO что делать при добавлении новой роли? Перевести на string?
 }

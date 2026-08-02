@@ -13,9 +13,12 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.HasKey(b => b.Id);
 
         builder.Property(b => b.Id)
-            .ValueGeneratedNever(); //Учитывая что я отказался от guid, возможно стоит дать автогенерацию
+            .UseIdentityByDefaultColumn();
 
         builder.Property(b => b.EventId)
+            .IsRequired();
+
+        builder.Property(booking => booking.UserId)
             .IsRequired();
 
         builder.Property(b => b.Status)
@@ -29,8 +32,15 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
 
         builder.Property(b => b.ProcessedAt);
 
+
+
         builder.HasOne(b => b.Event)
             .WithMany(e => e.Bookings)
             .HasForeignKey(b => b.EventId);
+
+        builder.HasOne(booking => booking.User)
+            .WithMany(user => user.Bookings)
+            .HasForeignKey(booking => booking.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

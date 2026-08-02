@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RestApiEventProject.Application;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestApiEventProject.Presentation.Controllers;
 
@@ -61,9 +62,12 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="eventItem">Описание мероприятия</param>
     /// <returns></returns>
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(EventResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create([FromBody] CreateEventRequestDto eventItem)
     {
         var newevent = _eventMapper.ToEntity(eventItem);
@@ -81,10 +85,13 @@ public class EventsController : ControllerBase
     /// <param name="id">номер мероприятия</param>
     /// <param name="eventItem">новые поля</param>
     /// <returns></returns>
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [HttpPut("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEventRequestDto eventItem)
     {
         var updateevent = _eventMapper.ToEntity(eventItem);
@@ -103,9 +110,12 @@ public class EventsController : ControllerBase
     /// </summary>
     /// <param name="id">номер мероприятия</param>
     /// <returns></returns>
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [HttpDelete("{id:int}")]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(int id)
     {
         if (await _eventService.DeleteAsync(id))

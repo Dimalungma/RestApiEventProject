@@ -18,14 +18,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings.FindAsync([id], cancellationToken);
     }
 
-    public async Task<long> GetLastIdAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Bookings
-            .OrderByDescending(booking => booking.Id)
-            .Select(booking => booking.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     public async Task AddAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         await _context.Bookings.AddAsync(booking, cancellationToken);
@@ -37,6 +29,18 @@ public class BookingRepository : IBookingRepository
             .Where(booking => booking.Status == BookingStatus.Pending)
             .Select(booking => booking.Id)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> GetActiveBookingsCountByUserIdAsync(
+        long userId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Bookings.CountAsync(
+            booking =>
+                booking.UserId == userId &&
+                (booking.Status == BookingStatus.Pending ||
+                 booking.Status == BookingStatus.Confirmed),
+            cancellationToken);
     }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)

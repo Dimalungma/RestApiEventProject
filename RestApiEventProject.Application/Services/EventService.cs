@@ -23,10 +23,6 @@ public class EventService : IEventService
 
     public async Task<Event> CreateAsync(Event eventItem)
     {
-        var lastId = await _eventRepository.GetLastIdAsync();
-
-        eventItem.Id = lastId + 1; //Пока оставлю управление номером id в коде
-
         await _eventRepository.AddAsync(eventItem);
 
         await _eventRepository.SaveChangesAsync();
