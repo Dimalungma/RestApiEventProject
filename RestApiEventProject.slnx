@@ -20,7 +20,7 @@
   <Folder Name="/UsersService/">
     <Project Path="UserService.Domain/UsersService.Domain.csproj" Id="06d40601-b829-40d3-b12e-82723bf36393" />
     <Project Path="UsersService.Application/UsersService.Application.csproj" Id="5931bd1f-b533-4999-8d65-ee348d5c1e3e" />
-    <Project Path="UsersService.Infrasructure/UsersService.Infrasructure.csproj" Id="6a1560aa-59d6-4975-9d0d-6ee6203dcf14" />
+    <Project Path="UsersService.Infrasructure/UsersService.Infrastructure.csproj" Id="6a1560aa-59d6-4975-9d0d-6ee6203dcf14" />
     <Project Path="UsersService.Presentation/UsersService.Presentation.csproj" Id="b25b1164-56a9-4624-beea-70bd88a68a16" />
   </Folder>
   <Project Path="RestApiEventProject.Application/RestApiEventProject.Application.csproj" Id="a06d0d09-c6f4-4325-8623-fd2df9998e36" />
