@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UserService.Domain\UsersService.Domain.csproj" />
     <ProjectReference Include="..\UsersService.Application\UsersService.Application.csproj" />
+    <ProjectReference Include="..\UsersService.Domain\UsersService.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,7 +22,6 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.19.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
-    <PackageReference Include="System.Security.Claims" Version="4.3.0" />
   </ItemGroup>
 
 </Project>

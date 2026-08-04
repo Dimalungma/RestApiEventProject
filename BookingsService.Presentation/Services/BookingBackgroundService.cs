@@ -1,6 +1,6 @@
 ﻿using BookingsService.Application;
 
-namespace RestApiEventProject.Presentation.Services;
+namespace BookingsService.Presentation.Services;
 
 public class BookingBackgroundService : BackgroundService
 {
