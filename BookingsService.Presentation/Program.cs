@@ -1,21 +1,59 @@
+using BookingsService.Application;
+using BookingsService.Infrastructure;
+using BookingsService.Presentation.Extensions;
+using BookingsService.Presentation.Middleware;
+using BookingsService.Presentation.Services;
+using Microsoft.OpenApi;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.ConfigureLogger();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAuthorization();
+
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen(options =>
+{
+    const string schemeName = "Bearer";
+
+    options.AddSecurityDefinition(schemeName, new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "Введите JWT-токен без префикса Bearer"
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference(schemeName, document)] = []
+    });
+});
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddHostedService<BookingBackgroundService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.Services.ApplyDatabaseMigrations();
+
+app.UseMiddleware<CustomExceptionHandler>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
