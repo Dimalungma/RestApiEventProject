@@ -11,6 +11,8 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<Event> Events => Set<Event>();
 
+    public DbSet<BookingReservation> BookingReservations => Set<BookingReservation>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly); //Автопоиск всех конфигураций в сборке. Cмотри DataAccess/Configurations

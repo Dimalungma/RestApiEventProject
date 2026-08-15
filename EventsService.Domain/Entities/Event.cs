@@ -37,17 +37,27 @@ public class Event
     public int TotalSeats { get; set; }
 
     public int AvailableSeats { get; set; }
-    public List<Booking> Bookings { get; set; } = [];
 
-    public bool TryReserveSeats(int count = 1)
+    public ReserveSeatsResult TryReserveSeats(int count = 1)
     {
+        if (count <= 0)
+        {
+            return ReserveSeatsResult.InvalidSeatsCount;
+        }
+
+        if (StartAt <= DateTime.UtcNow)
+        {
+            return ReserveSeatsResult.EventAlreadyStarted; //Теперь о дате начала знает только EventService
+        }
+
         if (AvailableSeats < count)
         {
-            return false;
+            return ReserveSeatsResult.NoAvailableSeats;
         }
 
         AvailableSeats -= count;
-        return true;
+
+        return ReserveSeatsResult.Success;
     }
 
     public void ReleaseSeats(int count = 1)

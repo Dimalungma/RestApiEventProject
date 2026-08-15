@@ -33,9 +33,5 @@ internal sealed class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.Property(e => e.AvailableSeats)
             .IsRequired();
-
-        builder.HasMany(e => e.Bookings)
-            .WithOne(b => b.Event)
-            .HasForeignKey(b => b.EventId);
     }
 }
