@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BookingsService.Application\BookingsService.Application.csproj" />
     <ProjectReference Include="..\BookingsService.Domain\BookingsService.Domain.csproj" />
+    <ProjectReference Include="..\RestApiEventProject.Contracts\RestApiEventProject.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

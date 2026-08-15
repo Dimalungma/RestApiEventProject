@@ -5,7 +5,6 @@ public interface IBookingEventPublisher
     Task PublishBookingCreatedAsync(
         long bookingId,
         int eventId,
-        long userId,
         int seatsCount,
         DateTime createdAtUtc,
         CancellationToken cancellationToken = default);
@@ -29,7 +28,6 @@ public interface IBookingEventPublisher
     Task PublishBookingCancelledAsync(
         long bookingId,
         int eventId,
-        long userId,
         int seatsCount,
         DateTime cancelledAtUtc,
         CancellationToken cancellationToken = default);
