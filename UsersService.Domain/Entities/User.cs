@@ -16,8 +16,6 @@ public class User
 
     public UserRole Role { get; set; }
 
-    public List<Booking> Bookings { get; set; } = []; //Чтобы сразу можно было привязать обратно 1:М бронирования к пользователю
-
     public static User Create(
         string login,
         string passwordHash,
