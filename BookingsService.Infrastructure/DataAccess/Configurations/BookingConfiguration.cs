@@ -31,16 +31,5 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .IsRequired();
 
         builder.Property(b => b.ProcessedAt);
-
-
-
-        builder.HasOne(b => b.Event)
-            .WithMany(e => e.Bookings)
-            .HasForeignKey(b => b.EventId);
-
-        builder.HasOne(booking => booking.User)
-            .WithMany(user => user.Bookings)
-            .HasForeignKey(booking => booking.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }

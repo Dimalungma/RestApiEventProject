@@ -33,8 +33,6 @@ public class BookingsController : ControllerBase
     /// <returns></returns>
     [HttpPost("events/{id:int}/book")]
     [ProducesResponseType(typeof(BookingInfoDto), StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateBooking(int id)
     {
@@ -43,31 +41,8 @@ public class BookingsController : ControllerBase
             return Unauthorized();
         }
 
-        var (booking, error) =
-            await _bookingService.CreateBookingAsync(id, userId);
+        var (booking, error) = await _bookingService.CreateBookingAsync(id, userId);
 
-        if (error == BookingCreateError.EventNotFound)
-        {
-            return NotFound($"Не найдено мероприятие с id {id}");
-        }
-        if (error == BookingCreateError.EventAlreadyStarted)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Event already started",
-                Detail = "Нельзя забронировать уже начавшееся мероприятие."
-            });
-        }
-        if (error == BookingCreateError.NoAvailableSeats) //Никаких exception'ов, это все бизнес логика, а значит нормальные коды ошибок и Result
-        {
-            return Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "No available seats",
-                Detail = "На мероприятии нет свободных мест"
-            });
-        }
         if (error == BookingCreateError.ActiveBookingsLimitExceeded)
         {
             return Conflict(new ProblemDetails
@@ -77,7 +52,6 @@ public class BookingsController : ControllerBase
                 Detail = $"Пользователь не может иметь больше {BookingConstants.MaxActiveBookingsPerUser} активных бронирований."
             });
         }
-
 
         var response = _bookingMapper.ToResponseDto(booking!);
 

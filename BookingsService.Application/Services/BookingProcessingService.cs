@@ -1,21 +1,19 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using BookingsService.Domain;
+using Microsoft.Extensions.Logging;
 
 namespace BookingsService.Application;
 
 public class BookingProcessingService : IBookingProcessingService
 {
-    private readonly IEventRepository _eventRepository;
     private readonly IBookingRepository _bookingRepository;
     private readonly ILogger<BookingProcessingService> _logger;
 
     private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
     public BookingProcessingService(
-        IEventRepository eventRepository,
         IBookingRepository bookingRepository,
         ILogger<BookingProcessingService> logger)
     {
-        _eventRepository = eventRepository;
         _bookingRepository = bookingRepository;
         _logger = logger;
     }
@@ -38,42 +36,34 @@ public class BookingProcessingService : IBookingProcessingService
                 return;
             }
 
-            _logger.LogInformation($"Начата фоновая обработка брони с id {booking.Id} для мероприятия с id {booking.EventId}");
-
-            if (cancellationToken.IsCancellationRequested)
+            if (booking.Status != BookingStatus.Pending)
             {
-                _logger.LogInformation($"Бронь с id {booking.Id} для мероприятия с id {booking.EventId} убрана из фоновой обработки, прислали CancellationToken");
+                _logger.LogInformation($"Бронь с id {booking.Id} уже не находится в статусе Pending");
 
                 return;
             }
+
+            _logger.LogInformation($"Начата фоновая обработка брони с id {booking.Id} для мероприятия с id {booking.EventId}");
 
             await Task.Delay(ProcessingDelay, cancellationToken); //Имитируем тяжелую операцию, а-ля бронь оплачивается и оформляется
 
             if (Random.Shared.Next(0, 6) == 5) //Плюс рандом mock отклонения заказа
             {
-                throw new PaymentRejectedException($"Бронь {booking.Id} отменена, не прошла оплата (Random)");
+                throw new PaymentRejectedException($"Бронь {booking.Id} отклонена, не прошла оплата (Random)");
             }
 
-            var existingEvent = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
-
-            if (existingEvent is null)
+            if (!booking.TryStartConfirmation())
             {
-                _logger.LogWarning($"Мероприятие с id {booking.EventId} не найдено, отменяю бронирование с id {booking.Id}");
-
-                booking.Reject();
-
-                await _bookingRepository.SaveChangesAsync(cancellationToken);
-
-                _logger.LogInformation($"Бронь с id {booking.Id} отменена");
+                _logger.LogInformation($"Бронь с id {booking.Id} не удалось перевести в ожидание подтверждения");
 
                 return;
             }
 
-            booking.Confirm();
-
             await _bookingRepository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation($"Бронь с id {booking.Id} подтверждена");
+            _logger.LogInformation($"Бронь с id {booking.Id} ожидает подтверждения мероприятия");
+
+            //TODO в Kafka опубликовать BookingCreated.
         }
         catch (OperationCanceledException)
         {
@@ -81,19 +71,17 @@ public class BookingProcessingService : IBookingProcessingService
         }
         catch (PaymentRejectedException exception)
         {
-            _logger.LogError(exception, $"Ошибка при оплате брони с id {bookingId}, отменяю бронирование");
+            _logger.LogError(exception, $"Ошибка при оплате брони с id {bookingId}, отклоняю бронирование");
 
-            await RejectBookingAndReleaseSeatAsync(bookingId, cancellationToken);
+            await RejectBookingAsync(bookingId, cancellationToken);
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {bookingId}, отменяю бронирование");
-
-            await RejectBookingAndReleaseSeatAsync(bookingId, cancellationToken);
+            _logger.LogError(exception, $"Неизвестная ошибка при обработке брони с id {bookingId}");
         }
     }
 
-    private async Task RejectBookingAndReleaseSeatAsync(long bookingId, CancellationToken cancellationToken)
+    private async Task RejectBookingAsync(long bookingId, CancellationToken cancellationToken)
     {
         try
         {
@@ -104,22 +92,18 @@ public class BookingProcessingService : IBookingProcessingService
                 return;
             }
 
-            var existingEvent = await _eventRepository.GetByIdAsync(booking.EventId, cancellationToken);
-
-            if (existingEvent is not null)
+            if (!booking.TryReject())
             {
-                existingEvent.ReleaseSeats();
+                return;
             }
-
-            booking.Reject();
 
             await _bookingRepository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation($"Бронь с id {booking.Id} отменена");
+            _logger.LogInformation($"Бронь с id {booking.Id} отклонена");
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, $"Не удалось отменить бронь с id {bookingId} после ошибки фоновой обработки");
+            _logger.LogError(exception, $"Не удалось отклонить бронь с id {bookingId} после ошибки фоновой обработки");
         }
     }
 

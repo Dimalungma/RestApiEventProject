@@ -4,17 +4,13 @@ public class Booking
 {
     private Booking()
     {
-        Event = null!;
-        User = null!;
     }
     public long Id { get; set; }
 
     public int EventId { get; set; }
-    public Event Event { get; set; }
 
     public long UserId { get; set; }
 
-    public User User { get; set; }
 
     private BookingStatus _status;
     public BookingStatus Status => _status;
@@ -36,21 +32,49 @@ public class Booking
         };
     }
 
-    public void Confirm()
+    public bool TryStartConfirmation()
     {
-        _status = BookingStatus.Confirmed;
-        ProcessedAt = DateTime.UtcNow;
+        if (_status != BookingStatus.Pending)
+        {
+            return false;
+        }
+
+        _status = BookingStatus.AwaitingConfirmation;
+
+        return true;
     }
 
-    public void Reject()
+    public bool TryConfirm()
     {
+        if (_status != BookingStatus.AwaitingConfirmation)
+        {
+            return false;
+        }
+
+        _status = BookingStatus.Confirmed;
+        ProcessedAt = DateTime.UtcNow;
+
+        return true;
+    }
+
+    public bool TryReject()
+    {
+        if (_status != BookingStatus.Pending &&
+            _status != BookingStatus.AwaitingConfirmation)
+        {
+            return false;
+        }
+
         _status = BookingStatus.Rejected;
         ProcessedAt = DateTime.UtcNow;
+
+        return true;
     }
 
     public bool Cancel()
     {
-        if (_status == BookingStatus.Cancelled) //От повторных перезаписей и освобождения лишних мест
+        if (_status == BookingStatus.Cancelled ||
+            _status == BookingStatus.Rejected)
         {
             return false;
         }

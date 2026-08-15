@@ -3,6 +3,7 @@
 public enum BookingStatus
 {
     Pending,
+    AwaitingConfirmation,
     Confirmed,
     Rejected,
     Cancelled

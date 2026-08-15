@@ -39,6 +39,7 @@ public class BookingRepository : IBookingRepository
             booking =>
                 booking.UserId == userId &&
                 (booking.Status == BookingStatus.Pending ||
+                 booking.Status == BookingStatus.AwaitingConfirmation ||
                  booking.Status == BookingStatus.Confirmed),
             cancellationToken);
     }

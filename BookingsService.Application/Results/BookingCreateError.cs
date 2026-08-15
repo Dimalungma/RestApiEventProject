@@ -1,8 +1,6 @@
 ﻿namespace BookingsService.Application;
+
 public enum BookingCreateError
 {
-    EventNotFound,
-    NoAvailableSeats,
-    EventAlreadyStarted, //Опять-таки, я против использования исключений для бизнес логики, поэтому идем через error'ы
-    ActiveBookingsLimitExceeded
+    ActiveBookingsLimitExceeded //По сути нам теперь enum и не нужен, но оставлю для соответствия прошлому коду, и возможно для будущих бизнес-ошибок
 }
