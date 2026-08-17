@@ -6,15 +6,18 @@ namespace BookingsService.Application;
 public class BookingProcessingService : IBookingProcessingService
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingEventPublisher _bookingEventPublisher;
     private readonly ILogger<BookingProcessingService> _logger;
 
     private static readonly TimeSpan ProcessingDelay = TimeSpan.FromSeconds(2);
 
     public BookingProcessingService(
-        IBookingRepository bookingRepository,
+        IBookingRepository bookingRepository, 
+        IBookingEventPublisher bookingEventPublisher,
         ILogger<BookingProcessingService> logger)
     {
-        _bookingRepository = bookingRepository;
+        _bookingRepository = bookingRepository; 
+        _bookingEventPublisher = bookingEventPublisher;
         _logger = logger;
     }
 
@@ -61,9 +64,14 @@ public class BookingProcessingService : IBookingProcessingService
 
             await _bookingRepository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation($"Бронь с id {booking.Id} ожидает подтверждения мероприятия");
+            await _bookingEventPublisher.PublishBookingCreatedAsync(
+                booking.Id,
+                booking.EventId,
+                BookingConstants.SeatsPerBooking,
+                booking.CreatedAt,
+                cancellationToken);
 
-            //TODO в Kafka опубликовать BookingCreated.
+            _logger.LogInformation($"Для брони с id {booking.Id} опубликовано событие BookingCreated");
         }
         catch (OperationCanceledException)
         {

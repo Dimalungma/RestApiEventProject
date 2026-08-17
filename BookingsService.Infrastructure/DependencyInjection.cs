@@ -1,5 +1,6 @@
 ﻿using BookingsService.Application;
 using BookingsService.Infrastructure.DataAccess;
+using BookingsService.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,10 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IBookingRepository, BookingRepository>();
+
+        services.Configure<KafkaOptions>(configuration.GetSection(KafkaOptions.SectionName));
+
+        services.AddSingleton<IBookingEventPublisher, KafkaBookingEventPublisher>();
 
         return services;
     }

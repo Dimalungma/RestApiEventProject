@@ -8,13 +8,16 @@ namespace BookingsService.Application;
 public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingEventPublisher _bookingEventPublisher;
 
     private static readonly SemaphoreSlim BookingSemaphore = new(1, 1);
 
     public BookingService(
-        IBookingRepository bookingRepository)
+        IBookingRepository bookingRepository,
+        IBookingEventPublisher bookingEventPublisher)
     {
         _bookingRepository = bookingRepository;
+        _bookingEventPublisher = bookingEventPublisher;
     }
 
 
@@ -57,6 +60,7 @@ public class BookingService : IBookingService
         {
             return BookingCancelError.Forbidden;
         }
+        var previousStatus = booking.Status;
 
         if (!booking.Cancel())
         {
@@ -65,7 +69,15 @@ public class BookingService : IBookingService
 
         await _bookingRepository.SaveChangesAsync();
 
-        //TODO после добавления кафки отправлять BookingCancelled, если уже был статус Confirm
+        if (previousStatus == BookingStatus.AwaitingConfirmation ||
+            previousStatus == BookingStatus.Confirmed) //Чтобы если status = pending, не захлямлять кафку. Ну и мб дубли на уже cancelled ивент
+        {
+            await _bookingEventPublisher.PublishBookingCancelledAsync(
+                booking.Id,
+                booking.EventId,
+                BookingConstants.SeatsPerBooking,
+                booking.ProcessedAt!.Value);
+        }
 
         return null;
     }
