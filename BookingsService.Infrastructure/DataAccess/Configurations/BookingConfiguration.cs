@@ -31,5 +31,7 @@ internal sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
             .IsRequired();
 
         builder.Property(b => b.ProcessedAt);
+
+        builder.Property(booking => booking.ConfirmationRequestedAt);
     }
 }

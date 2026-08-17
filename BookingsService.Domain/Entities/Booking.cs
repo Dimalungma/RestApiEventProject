@@ -10,6 +10,7 @@ public class Booking
     public int EventId { get; set; }
 
     public long UserId { get; set; }
+    public DateTime? ConfirmationRequestedAt { get; private set; }
 
 
     private BookingStatus _status;
@@ -28,7 +29,8 @@ public class Booking
             UserId = userId,
             _status = BookingStatus.Pending,
             CreatedAt = DateTime.UtcNow,
-            ProcessedAt = null
+            ProcessedAt = null,
+            ConfirmationRequestedAt = null
         };
     }
 
@@ -81,6 +83,19 @@ public class Booking
 
         _status = BookingStatus.Cancelled;
         ProcessedAt = DateTime.UtcNow;
+
+        return true;
+    }
+
+    public bool MarkConfirmationRequested()
+    {
+        if (_status != BookingStatus.AwaitingConfirmation ||
+            ConfirmationRequestedAt is not null)
+        {
+            return false;
+        }
+
+        ConfirmationRequestedAt = DateTime.UtcNow;
 
         return true;
     }

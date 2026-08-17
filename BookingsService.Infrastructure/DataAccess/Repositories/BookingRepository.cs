@@ -44,6 +44,17 @@ public class BookingRepository : IBookingRepository
             cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<long>> GetAwaitingConfirmationWithoutRequestIdsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Bookings
+            .Where(booking =>
+                booking.Status == BookingStatus.AwaitingConfirmation &&
+                booking.ConfirmationRequestedAt == null)
+            .Select(booking => booking.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

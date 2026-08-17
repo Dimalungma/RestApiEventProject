@@ -39,6 +39,19 @@ public class BookingProcessingService : IBookingProcessingService
                 return;
             }
 
+            if (booking.Status == BookingStatus.AwaitingConfirmation)
+            {
+                if (booking.ConfirmationRequestedAt is null)
+                {
+                    _logger.LogInformation(
+                        $"Повторная публикация BookingCreated для брони с id {booking.Id}");
+
+                    await PublishBookingCreatedAsync(booking, cancellationToken); //AtLeastOnce, иначе риск оставить бронь в суперпозиции
+                }
+
+                return;
+            }
+
             if (booking.Status != BookingStatus.Pending)
             {
                 _logger.LogInformation($"Бронь с id {booking.Id} уже не находится в статусе Pending");
@@ -64,12 +77,7 @@ public class BookingProcessingService : IBookingProcessingService
 
             await _bookingRepository.SaveChangesAsync(cancellationToken);
 
-            await _bookingEventPublisher.PublishBookingCreatedAsync(
-                booking.Id,
-                booking.EventId,
-                BookingConstants.SeatsPerBooking,
-                booking.CreatedAt,
-                cancellationToken);
+            await PublishBookingCreatedAsync(booking, cancellationToken);
 
             _logger.LogInformation($"Для брони с id {booking.Id} опубликовано событие BookingCreated");
         }
@@ -113,6 +121,33 @@ public class BookingProcessingService : IBookingProcessingService
         {
             _logger.LogError(exception, $"Не удалось отклонить бронь с id {bookingId} после ошибки фоновой обработки");
         }
+    }
+
+    private async Task PublishBookingCreatedAsync(
+        Booking booking,
+        CancellationToken cancellationToken)
+    {
+        await _bookingEventPublisher.PublishBookingCreatedAsync(
+            booking.Id,
+            booking.EventId,
+            BookingConstants.SeatsPerBooking,
+            booking.CreatedAt,
+            cancellationToken);
+
+        if (booking.MarkConfirmationRequested())
+        {
+            await _bookingRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        _logger.LogInformation(
+            $"Для брони с id {booking.Id} опубликовано событие BookingCreated");
+    }
+
+    public async Task<IReadOnlyCollection<long>> GetAwaitingConfirmationWithoutRequestIdsAsync(
+    CancellationToken cancellationToken = default)
+    {
+        return await _bookingRepository
+            .GetAwaitingConfirmationWithoutRequestIdsAsync(cancellationToken);
     }
 
     private sealed class PaymentRejectedException : Exception

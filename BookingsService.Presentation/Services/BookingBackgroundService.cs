@@ -29,9 +29,11 @@ public class BookingBackgroundService : BackgroundService
         {
             try
             {
-                var pendingBookingIds = await GetPendingBookingIdsAsync(stoppingToken);
+                var bookingIds = await GetBookingIdsToProcessAsync(stoppingToken);
 
-                var tasks = pendingBookingIds.Select(bookingId => ProcessBookingInNewScopeAsync(bookingId, stoppingToken));
+
+                var tasks = bookingIds.Select(
+                    bookingId => ProcessBookingInNewScopeAsync(bookingId, stoppingToken));
 
                 await Task.WhenAll(tasks);
 
@@ -50,13 +52,25 @@ public class BookingBackgroundService : BackgroundService
         }
     }
 
-    private async Task<IReadOnlyCollection<long>> GetPendingBookingIdsAsync(CancellationToken stoppingToken)
+    private async Task<IReadOnlyCollection<long>> GetBookingIdsToProcessAsync(
+        CancellationToken stoppingToken)
     {
         using var scope = _scopeFactory.CreateScope();
 
-        var bookingProcessingService = scope.ServiceProvider.GetRequiredService<IBookingProcessingService>();
+        var bookingProcessingService =
+            scope.ServiceProvider.GetRequiredService<IBookingProcessingService>();
 
-        return await bookingProcessingService.GetPendingBookingIdsAsync(stoppingToken);
+        var pendingBookingIds =
+            await bookingProcessingService.GetPendingBookingIdsAsync(stoppingToken);
+
+        var awaitingConfirmationBookingIds =
+            await bookingProcessingService.GetAwaitingConfirmationWithoutRequestIdsAsync(
+                stoppingToken);
+
+        return pendingBookingIds
+            .Concat(awaitingConfirmationBookingIds)
+            .Distinct()
+            .ToArray();
     }
 
     private async Task ProcessBookingInNewScopeAsync(long bookingId, CancellationToken stoppingToken)
