@@ -23,10 +23,6 @@
     <Project Path="UsersService.Infrastructure/UsersService.Infrastructure.csproj" />
     <Project Path="UsersService.Presentation/UsersService.Presentation.csproj" Id="b25b1164-56a9-4624-beea-70bd88a68a16" />
   </Folder>
-  <Project Path="RestApiEventProject.Application/RestApiEventProject.Application.csproj" Id="a06d0d09-c6f4-4325-8623-fd2df9998e36" />
-  <Project Path="RestApiEventProject.Domain/RestApiEventProject.Domain.csproj" Id="8d59e909-ac65-4cb5-bcdb-8881badc036f" />
-  <Project Path="RestApiEventProject.Infrastructure/RestApiEventProject.Infrastructure.csproj" Id="48ff2d17-3e1f-4b05-b845-74e3e569d82a" />
   <Project Path="RestApiEventProject.IntegrationTests/RestApiEventProject.IntegrationTests.csproj" Id="29e508e7-f623-45b5-af4c-5c73a1ec5706" />
   <Project Path="RestApiEventProject.Tests/RestApiProject.Tests.csproj" Id="3c14b44d-c65c-43fe-bc03-df0c69cfdd86" />
-  <Project Path="RestApiEventProject/RestApiEventProject.Presentation.csproj" />
 </Solution>

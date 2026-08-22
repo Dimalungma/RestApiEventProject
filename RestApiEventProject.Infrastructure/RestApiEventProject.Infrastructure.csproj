@@ -20,9 +20,4 @@
     <PackageReference Include="System.Security.Claims" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RestApiEventProject.Application\RestApiEventProject.Application.csproj" />
-    <ProjectReference Include="..\RestApiEventProject.Domain\RestApiEventProject.Domain.csproj" />
-  </ItemGroup>
-
 </Project>

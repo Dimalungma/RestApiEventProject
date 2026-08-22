@@ -24,11 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RestApiEventProject.Application\RestApiEventProject.Application.csproj" />
-    <ProjectReference Include="..\RestApiEventProject.Infrastructure\RestApiEventProject.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Controllers\" />
   </ItemGroup>
 
