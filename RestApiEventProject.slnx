@@ -23,6 +23,4 @@
     <Project Path="UsersService.Infrastructure/UsersService.Infrastructure.csproj" />
     <Project Path="UsersService.Presentation/UsersService.Presentation.csproj" Id="b25b1164-56a9-4624-beea-70bd88a68a16" />
   </Folder>
-  <Project Path="RestApiEventProject.IntegrationTests/RestApiEventProject.IntegrationTests.csproj" Id="29e508e7-f623-45b5-af4c-5c73a1ec5706" />
-  <Project Path="RestApiEventProject.Tests/RestApiProject.Tests.csproj" Id="3c14b44d-c65c-43fe-bc03-df0c69cfdd86" />
 </Solution>
