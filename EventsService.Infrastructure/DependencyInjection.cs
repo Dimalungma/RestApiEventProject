@@ -1,5 +1,6 @@
 ﻿using EventsService.Application;
 using EventsService.Infrastructure.DataAccess;
+using EventsService.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,14 @@ public static class DependencyInjection
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingReservationRepository, BookingReservationRepository>();
+
+        services.Configure<KafkaOptions>(
+            configuration.GetSection(KafkaOptions.SectionName));
+
+        services.AddSingleton<IEventSeatEventPublisher, KafkaEventSeatEventPublisher>();
+
+        services.AddHostedService<KafkaTopicInitializer>();
+        services.AddHostedService<KafkaBookingLifecycleConsumer>();
 
         return services;
     }

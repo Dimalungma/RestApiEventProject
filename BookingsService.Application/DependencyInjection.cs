@@ -8,6 +8,8 @@ public static class DependencyInjection
     {
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IBookingProcessingService, BookingProcessingService>();
+        services.AddScoped<IEventSeatResultHandler, EventSeatResultHandler>();
+
         services.AddSingleton<IBookingMapper, BookingMapper>();
 
         return services;

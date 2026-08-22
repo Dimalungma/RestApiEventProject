@@ -1,4 +1,4 @@
-﻿namespace BookingsService.Infrastructure.Messaging;
+﻿namespace EventsService.Infrastructure.Messaging;
 
 public sealed class KafkaOptions
 {

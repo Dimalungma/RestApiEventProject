@@ -53,7 +53,7 @@ public class BookingReservation
 
     public bool Cancel()
     {
-        if (_status != BookingReservationStatus.Reserved)
+        if (_status == BookingReservationStatus.Cancelled)
         {
             return false;
         }

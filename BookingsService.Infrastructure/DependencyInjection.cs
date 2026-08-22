@@ -24,6 +24,8 @@ public static class DependencyInjection
 
         services.AddSingleton<IBookingEventPublisher, KafkaBookingEventPublisher>();
 
+        services.AddHostedService<KafkaEventSeatResultConsumer>();
+
         return services;
     }
 }
