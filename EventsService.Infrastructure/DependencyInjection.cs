@@ -1,6 +1,7 @@
 ﻿using EventsService.Application;
 using EventsService.Infrastructure.DataAccess;
 using EventsService.Infrastructure.Messaging;
+using EventsService.Infrastructure.Caching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,8 +28,13 @@ public static class DependencyInjection
             var connectionString = configuration.GetConnectionString("Redis")
                                    ?? throw new InvalidOperationException("Не настроена строка подключения Redis");
 
-            return ConnectionMultiplexer.Connect(connectionString);
+            var options = ConfigurationOptions.Parse(connectionString);
+            options.AbortOnConnectFail = false;
+
+            return ConnectionMultiplexer.Connect(options);
         });
+
+        services.AddSingleton<ICacheService, RedisCacheService>();
 
         services.Configure<KafkaOptions>(
             configuration.GetSection(KafkaOptions.SectionName));
