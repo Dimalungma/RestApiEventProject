@@ -4,6 +4,7 @@ using EventsService.Infrastructure.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace EventsService.Infrastructure;
 
@@ -20,6 +21,14 @@ public static class DependencyInjection
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingReservationRepository, BookingReservationRepository>();
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var connectionString = configuration.GetConnectionString("Redis")
+                                   ?? throw new InvalidOperationException("Не настроена строка подключения Redis");
+
+            return ConnectionMultiplexer.Connect(connectionString);
+        });
 
         services.Configure<KafkaOptions>(
             configuration.GetSection(KafkaOptions.SectionName));
