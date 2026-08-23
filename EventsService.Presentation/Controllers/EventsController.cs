@@ -57,6 +57,22 @@ public class EventsController : ControllerBase
 
         return Ok(_eventMapper.ToResponseDto(foundevent));
     }
+
+    /// <summary>
+    /// Запрос топ-10 мероприятий с наибольшим процентом проданных мест.
+    /// </summary>
+    /// <returns></returns>
+    [ProducesResponseType(
+        typeof(IEnumerable<EventResponseDto>),
+        StatusCodes.Status200OK)]
+    [HttpGet("top")]
+    public async Task<IActionResult> GetTop10()
+    {
+        var topEvents = await _eventService.GetTop10Async();
+
+        return Ok(_eventMapper.ToResponseDtoList(topEvents));
+    }
+
     /// <summary>
     /// Публикация нового мероприятия
     /// </summary>

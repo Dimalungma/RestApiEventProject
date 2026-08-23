@@ -4,11 +4,18 @@ namespace EventsService.Application;
 
 public class EventService : IEventService
 {
-    private readonly IEventRepository _eventRepository;
+    private readonly IEventRepository _eventRepository; 
+    private readonly ICacheService _cacheService;
+    private readonly CacheOptions _cacheOptions;
 
-    public EventService(IEventRepository eventRepository)
+    public EventService(
+        IEventRepository eventRepository,
+        ICacheService cacheService,
+        CacheOptions cacheOptions)
     {
         _eventRepository = eventRepository;
+        _cacheService = cacheService;
+        _cacheOptions = cacheOptions;
     }
 
     public async Task<PaginatedResult<Event>> GetAllAsync(GetEventsQuery query)
@@ -18,7 +25,43 @@ public class EventService : IEventService
 
     public async Task<Event?> GetByIdAsync(int id)
     {
-        return await _eventRepository.GetByIdAsync(id);
+        var cacheKey = EventCacheKeys.ById(id);
+
+        var cachedEvent = await _cacheService.GetAsync<Event>(cacheKey);
+
+        if (cachedEvent is not null)
+            return cachedEvent;
+
+        var eventItem = await _eventRepository.GetByIdAsync(id);
+
+        if (eventItem is null)
+            return null;
+
+        await _cacheService.SetAsync(
+            cacheKey,
+            eventItem,
+            TimeSpan.FromMinutes(_cacheOptions.EventTtlMinutes));
+
+        return eventItem;
+    }
+
+    public async Task<IReadOnlyCollection<Event>> GetTop10Async()
+    {
+        var cachedEvents =
+            await _cacheService.GetAsync<List<Event>>(EventCacheKeys.Top10);
+
+        if (cachedEvents is not null)
+            return cachedEvents;
+
+        var topEvents =
+            (await _eventRepository.GetTop10Async()).ToList();
+
+        await _cacheService.SetAsync(
+            EventCacheKeys.Top10,
+            topEvents,
+            TimeSpan.FromMinutes(_cacheOptions.TopEventsTtlMinutes));
+
+        return topEvents;
     }
 
     public async Task<Event> CreateAsync(Event eventItem)

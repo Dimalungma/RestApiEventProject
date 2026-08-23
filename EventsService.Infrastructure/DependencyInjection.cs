@@ -36,6 +36,19 @@ public static class DependencyInjection
 
         services.AddSingleton<ICacheService, RedisCacheService>();
 
+        var cacheOptions = configuration
+                               .GetSection(CacheOptions.SectionName)
+                               .Get<CacheOptions>()
+                           ?? throw new InvalidOperationException("Не настроены параметры кеша");
+
+        if (cacheOptions.EventTtlMinutes <= 0 ||
+            cacheOptions.TopEventsTtlMinutes <= 0)
+        {
+            throw new InvalidOperationException("TTL кеша должен быть больше нуля");
+        }
+
+        services.AddSingleton(cacheOptions);
+
         services.Configure<KafkaOptions>(
             configuration.GetSection(KafkaOptions.SectionName));
 
