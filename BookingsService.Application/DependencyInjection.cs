@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddScoped<IEventSeatResultHandler, EventSeatResultHandler>();
 
         services.AddSingleton<IBookingMapper, BookingMapper>();
+        services.AddSingleton<IUserBookingLock, UserBookingLock>();
 
         return services;
     }

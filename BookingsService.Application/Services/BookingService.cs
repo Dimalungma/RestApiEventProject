@@ -9,25 +9,26 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IBookingEventPublisher _bookingEventPublisher;
-
-    private static readonly SemaphoreSlim BookingSemaphore = new(1, 1);
+    private readonly IUserBookingLock _userBookingLock;
 
     public BookingService(
         IBookingRepository bookingRepository,
-        IBookingEventPublisher bookingEventPublisher)
+        IBookingEventPublisher bookingEventPublisher,
+            IUserBookingLock userBookingLock)
     {
         _bookingRepository = bookingRepository;
         _bookingEventPublisher = bookingEventPublisher;
+        _userBookingLock = userBookingLock;
     }
 
 
     public async Task<(Booking? Booking, BookingCreateError? Error)> CreateBookingAsync(int eventId, long userId)
     {
-        await BookingSemaphore.WaitAsync();
-
-        try
+        using (await _userBookingLock.AcquireAsync(userId))
         {
-            var activeBookingsCount = await _bookingRepository.GetActiveBookingsCountByUserIdAsync(userId);
+            var activeBookingsCount =
+                await _bookingRepository.GetActiveBookingsCountByUserIdAsync(userId);
+
             if (activeBookingsCount >= BookingConstants.MaxActiveBookingsPerUser)
             {
                 return (null, BookingCreateError.ActiveBookingsLimitExceeded);
@@ -39,11 +40,6 @@ public class BookingService : IBookingService
             await _bookingRepository.SaveChangesAsync();
 
             return (booking, null);
-            //До подтверждения "оплаты" бэкграунд сервисом, в кафку ничего не полетит
-        }
-        finally
-        {
-            BookingSemaphore.Release();
         }
     }
 

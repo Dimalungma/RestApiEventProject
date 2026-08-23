@@ -7,8 +7,8 @@ public class BookingBackgroundService : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<BookingBackgroundService> _logger;
 
-    //Увеличил до 10 в рамках отладки, так как нереально отловить момент смены, сразу идет инициализация даже с Delay в 2 секунды, а я не успеваю промотать до GET в swagger'е))
-    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(10);
+    //Увеличил до 5 в рамках отладки, так как нереально отловить момент смены, сразу идет инициализация даже с Delay в 2 секунды, а я не успеваю промотать до GET в swagger'е))
+    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5);
 
     public BookingBackgroundService(
         IServiceScopeFactory scopeFactory,

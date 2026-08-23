@@ -21,7 +21,8 @@ public sealed class KafkaEventSeatEventPublisher : IEventSeatEventPublisher, IDi
         var producerConfig = new ProducerConfig
         {
             BootstrapServers = options.Value.BootstrapServers,
-            EnableIdempotence = true
+            EnableIdempotence = true,
+            Acks = Acks.All
         };
 
         _producer = new ProducerBuilder<string, string>(producerConfig).Build();

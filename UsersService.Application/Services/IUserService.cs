@@ -14,4 +14,8 @@ public interface IUserService
         string login,
         string password,
         CancellationToken cancellationToken = default);
+
+    Task<bool> IsAdminAsync(
+        string login,
+        CancellationToken cancellationToken = default);
 }

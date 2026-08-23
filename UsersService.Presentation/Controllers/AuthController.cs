@@ -6,7 +6,6 @@ namespace UsersService.Presentation.Controllers;
 
 [ApiController]
 [Route("auth")]
-[AllowAnonymous]
 public sealed class AuthController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -17,28 +16,74 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register(
-        [FromBody] RegisterUserRequestDto request,
+        [FromBody] RegisterRequestDto request,
         CancellationToken cancellationToken)
     {
-        if (!TryParseRole(request.Role, out var isAdmin))
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "Invalid role",
-                Detail = "Допустимые роли: User и Admin."
-            });
-        }
 
         var error = await _userService.RegisterAsync(
             request.Login,
             request.Password,
-            isAdmin,
+            false,
             cancellationToken);
 
+        return MapRegisterResult(error);
+    }
+
+
+    [HttpPost("register-admin")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RegisterAdmin(
+        [FromBody] RegisterRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var error = await _userService.RegisterAsync(
+            request.Login,
+            request.Password,
+            true,
+            cancellationToken);
+
+        return MapRegisterResult(error);
+    }
+
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginUserRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var (token, error) = await _userService.LoginAsync(
+            request.Login,
+            request.Password,
+            cancellationToken);
+
+        if (error == UserLoginError.InvalidCredentials)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Invalid credentials",
+                Detail = "Неверный логин или пароль."
+            });
+        }
+
+        return Ok(new LoginResponseDto
+        {
+            Token = token!
+        });
+    }
+
+    private IActionResult MapRegisterResult(UserRegisterError? error)
+    {
         return error switch
         {
             null => NoContent(),
@@ -73,54 +118,5 @@ public sealed class AuthController : ControllerBase
 
             _ => StatusCode(StatusCodes.Status500InternalServerError)
         };
-    }
-
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Login(
-        [FromBody] LoginUserRequestDto request,
-        CancellationToken cancellationToken)
-    {
-        var (token, error) = await _userService.LoginAsync(
-            request.Login,
-            request.Password,
-            cancellationToken);
-
-        if (error == UserLoginError.InvalidCredentials)
-        {
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "Invalid credentials",
-                Detail = "Неверный логин или пароль."
-            });
-        }
-
-        return Ok(new LoginResponseDto
-        {
-            Token = token!
-        });
-    }
-
-    private static bool TryParseRole(
-        string? role,
-        out bool isAdmin)
-    {
-        if (string.IsNullOrWhiteSpace(role) ||
-            string.Equals(role, "User", StringComparison.OrdinalIgnoreCase))
-        {
-            isAdmin = false;
-            return true;
-        }
-
-        if (string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase))
-        {
-            isAdmin = true;
-            return true;
-        }
-
-        isAdmin = false;
-        return false;
     }
 }

@@ -108,4 +108,15 @@ public sealed class UserService : IUserService
 
         return false;
     }
+
+    public async Task<bool> IsAdminAsync(
+        string login,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByLoginAsync(
+            login,
+            cancellationToken);
+
+        return user?.Role == UserRole.Admin;
+    }
 }

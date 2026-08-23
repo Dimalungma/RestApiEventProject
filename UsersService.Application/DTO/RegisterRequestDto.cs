@@ -3,7 +3,7 @@
 /// <summary>
 /// Запрос на регистрацию пользователя
 /// </summary>
-public sealed class RegisterUserRequestDto
+public sealed class RegisterRequestDto
 {
     /// <summary>
     /// Логин пользователя
@@ -13,8 +13,6 @@ public sealed class RegisterUserRequestDto
     /// Пароль пользователя
     /// </summary>
     public required string Password { get; init; }
-    /// <summary>
-    /// Роль, если оставить пустой\null, будет выдано по умолчанию
-    /// </summary>
-    public string? Role { get; init; }
+
+    //Role убран, теперь регистрация админ\пользователь идет через два разных endpoint'а
 }
