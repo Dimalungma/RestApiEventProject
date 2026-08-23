@@ -1,16 +1,26 @@
 <Solution>
+  <Folder Name="/BookingsService/">
+    <Project Path="BookingsService.Application/BookingsService.Application.csproj" Id="de79c8ed-ac49-4e01-8099-057427893b4d" />
+    <Project Path="BookingsService.Domain/BookingsService.Domain.csproj" Id="99f350d2-8254-4f77-bbfb-59029e24df6c" />
+    <Project Path="BookingsService.Infrastructure/BookingsService.Infrastructure.csproj" Id="420642f9-c708-4f16-8d01-9a5acb33231d" />
+    <Project Path="BookingsService.Presentation/BookingsService.Presentation.csproj" Id="4b82fbb8-f9e9-4701-88b8-231ca4a5e0be" />
+  </Folder>
+  <Folder Name="/EventsService/">
+    <Project Path="EventsService.Application/EventsService.Application.csproj" Id="bb89527d-8df4-4d34-be53-4734f45bb763" />
+    <Project Path="EventsService.Domain/EventsService.Domain.csproj" Id="ba08a85e-32e6-457b-8f4d-a5cfefad9a34" />
+    <Project Path="EventsService.Infrastructure/EventsService.Infrastructure.csproj" Id="ec83ad03-8eee-4382-9e47-69d302538a73" />
+    <Project Path="EventsService.Presentation/EventsService.Presentation.csproj" Id="0087eb49-b7bb-4d35-bce1-eb80f392500a" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="RestApiEventProject.Contracts/RestApiEventProject.Contracts.csproj" Id="aa30253a-5384-4bb6-a787-962f120050e5" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="RestApiEventProject.Application/RestApiEventProject.Application.csproj" Id="a06d0d09-c6f4-4325-8623-fd2df9998e36">
-  </Project>
-  <Project Path="RestApiEventProject.Domain/RestApiEventProject.Domain.csproj" Id="8d59e909-ac65-4cb5-bcdb-8881badc036f">
-  </Project>
-  <Project Path="RestApiEventProject.Infrastructure/RestApiEventProject.Infrastructure.csproj" Id="48ff2d17-3e1f-4b05-b845-74e3e569d82a">
-  </Project>
-  <Project Path="RestApiEventProject.IntegrationTests/RestApiEventProject.IntegrationTests.csproj" Id="29e508e7-f623-45b5-af4c-5c73a1ec5706" />
-  <Project Path="RestApiEventProject.Tests/RestApiProject.Tests.csproj" Id="3c14b44d-c65c-43fe-bc03-df0c69cfdd86">
-  </Project>
-  <Project Path="RestApiEventProject/RestApiEventProject.Presentation.csproj">
-  </Project>
+  <Folder Name="/UsersService/">
+    <Project Path="UsersService.Application/UsersService.Application.csproj" Id="5931bd1f-b533-4999-8d65-ee348d5c1e3e" />
+    <Project Path="UsersService.Domain/UsersService.Domain.csproj" />
+    <Project Path="UsersService.Infrastructure/UsersService.Infrastructure.csproj" />
+    <Project Path="UsersService.Presentation/UsersService.Presentation.csproj" Id="b25b1164-56a9-4624-beea-70bd88a68a16" />
+  </Folder>
 </Solution>

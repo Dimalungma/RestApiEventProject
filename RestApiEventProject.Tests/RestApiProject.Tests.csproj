@@ -17,13 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RestApiEventProject.Application\RestApiEventProject.Application.csproj" />
-    <ProjectReference Include="..\RestApiEventProject.Domain\RestApiEventProject.Domain.csproj" />
-    <ProjectReference Include="..\RestApiEventProject.Infrastructure\RestApiEventProject.Infrastructure.csproj" />
-    <ProjectReference Include="..\RestApiEventProject\RestApiEventProject.Presentation.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
