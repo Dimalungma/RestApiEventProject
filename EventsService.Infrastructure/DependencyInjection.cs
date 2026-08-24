@@ -25,7 +25,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
-            var connectionString = configuration.GetConnectionString("Redis")
+            var connectionString = configuration["Redis:ConnectionString"]
                                    ?? throw new InvalidOperationException("Не настроена строка подключения Redis");
 
             var options = ConfigurationOptions.Parse(connectionString);
