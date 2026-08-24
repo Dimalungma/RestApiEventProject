@@ -70,6 +70,9 @@ public class EventService : IEventService
 
         await _eventRepository.SaveChangesAsync();
 
+        await _cacheService.RemoveAsync(
+            EventCacheKeys.ById(eventItem.Id));
+
         return eventItem;
     }
 
@@ -95,6 +98,9 @@ public class EventService : IEventService
         // Тут специально не трогаю AvailableSeats.
         await _eventRepository.SaveChangesAsync();
 
+        await _cacheService.RemoveAsync(
+            EventCacheKeys.ById(eventItem.Id));
+
         return EventUpdateResult.Success;
     }
 
@@ -110,6 +116,9 @@ public class EventService : IEventService
         _eventRepository.Delete(existingEvent);
 
         await _eventRepository.SaveChangesAsync();
+
+        await _cacheService.RemoveAsync(
+            EventCacheKeys.ById(id));
 
         return true;
     }
