@@ -1,7 +1,7 @@
-﻿using FluentAssertions;
+﻿using EventsService.Application;
+using EventsService.Domain;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using RestApiEventProject.Application;
-using RestApiEventProject.Domain;
 
 namespace RestApiProject.Tests;
 
@@ -14,12 +14,16 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var startAt = FutureUtcDate(1, 10);
+        var endAt = FutureUtcDate(1, 12);
 
         var eventItem = CreateEvent(
             title: "Встреча по unit-тестам",
-            startAt: UtcDate(2026, 4, 10, 10),
-            endAt: UtcDate(2026, 4, 10, 12));
+            startAt: startAt,
+            endAt: endAt);
 
         // Act
         var result = await service.CreateAsync(eventItem);
@@ -27,8 +31,8 @@ public class EventServiceTests
         // Assert
         result.Id.Should().Be(1);
         result.Title.Should().Be("Встреча по unit-тестам");
-        result.StartAt.Should().Be(UtcDate(2026, 4, 10, 10));
-        result.EndAt.Should().Be(UtcDate(2026, 4, 10, 12));
+        result.StartAt.Should().Be(startAt);
+        result.EndAt.Should().Be(endAt);
         result.TotalSeats.Should().Be(10);
         result.AvailableSeats.Should().Be(10);
     }
@@ -40,7 +44,8 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         await FillEventsAsync(service);
 
@@ -67,12 +72,13 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         var createdEvent = await service.CreateAsync(CreateEvent(
             title: "Разработка",
-            startAt: UtcDate(2026, 4, 11, 9),
-            endAt: UtcDate(2026, 4, 11, 18)));
+            startAt: FutureUtcDate(2, 9),
+            endAt: FutureUtcDate(2, 18)));
 
         // Act
         var result = await service.GetByIdAsync(createdEvent.Id);
@@ -90,7 +96,8 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         // Act
         var result = await service.GetByIdAsync(999);
@@ -106,23 +113,30 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         var oldEvent = await service.CreateAsync(CreateEvent(
             title: "Старый",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 11)));
+            startAt: FutureUtcDate(3, 10),
+            endAt: FutureUtcDate(3, 11)));
+
+        var newStartAt = FutureUtcDate(3, 12);
+        var newEndAt = FutureUtcDate(3, 13, 30);
 
         var updatedEvent = CreateEvent(
             title: "Новый",
             description: "С описанием",
-            startAt: UtcDate(2026, 4, 12, 12),
-            endAt: UtcDate(2026, 4, 12, 13, 30),
+            startAt: newStartAt,
+            endAt: newEndAt,
             totalSeats: 20);
 
         // Act
-        var updateResult = await service.UpdateAsync(oldEvent.Id, updatedEvent);
-        var storedEvent = await service.GetByIdAsync(oldEvent.Id);
+        var updateResult =
+            await service.UpdateAsync(oldEvent.Id, updatedEvent);
+
+        var storedEvent =
+            await service.GetByIdAsync(oldEvent.Id);
 
         // Assert
         updateResult.Should().Be(EventUpdateResult.Success);
@@ -130,8 +144,8 @@ public class EventServiceTests
         storedEvent.Should().NotBeNull();
         storedEvent!.Title.Should().Be("Новый");
         storedEvent.Description.Should().Be("С описанием");
-        storedEvent.StartAt.Should().Be(UtcDate(2026, 4, 12, 12));
-        storedEvent.EndAt.Should().Be(UtcDate(2026, 4, 12, 13, 30));
+        storedEvent.StartAt.Should().Be(newStartAt);
+        storedEvent.EndAt.Should().Be(newEndAt);
         storedEvent.TotalSeats.Should().Be(20);
         storedEvent.AvailableSeats.Should().Be(20);
     }
@@ -143,15 +157,17 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         var updatedEvent = CreateEvent(
             title: "НИИ ЧАВО",
-            startAt: UtcDate(2026, 4, 12, 12),
-            endAt: UtcDate(2026, 4, 12, 13));
+            startAt: FutureUtcDate(3, 12),
+            endAt: FutureUtcDate(3, 13));
 
         // Act
-        var result = await service.UpdateAsync(999, updatedEvent);
+        var result =
+            await service.UpdateAsync(999, updatedEvent);
 
         // Assert
         result.Should().Be(EventUpdateResult.NotFound);
@@ -164,13 +180,16 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
-        var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var eventRepository =
+            scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
         var eventItem = await service.CreateAsync(CreateEvent(
             title: "Событие",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 11),
+            startAt: FutureUtcDate(4, 10),
+            endAt: FutureUtcDate(4, 11),
             totalSeats: 40));
 
         eventItem.TryReserveSeats(20);
@@ -178,13 +197,16 @@ public class EventServiceTests
 
         var updatedEvent = CreateEvent(
             title: "Событие обновлено",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 11),
+            startAt: FutureUtcDate(4, 10),
+            endAt: FutureUtcDate(4, 11),
             totalSeats: 50);
 
         // Act
-        var updateResult = await service.UpdateAsync(eventItem.Id, updatedEvent);
-        var storedEvent = await service.GetByIdAsync(eventItem.Id);
+        var updateResult =
+            await service.UpdateAsync(eventItem.Id, updatedEvent);
+
+        var storedEvent =
+            await service.GetByIdAsync(eventItem.Id);
 
         // Assert
         updateResult.Should().Be(EventUpdateResult.Success);
@@ -201,13 +223,16 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
-        var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        var eventRepository =
+            scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
         var eventItem = await service.CreateAsync(CreateEvent(
             title: "Событие",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 11),
+            startAt: FutureUtcDate(5, 10),
+            endAt: FutureUtcDate(5, 11),
             totalSeats: 40));
 
         eventItem.TryReserveSeats(20);
@@ -215,13 +240,16 @@ public class EventServiceTests
 
         var updatedEvent = CreateEvent(
             title: "Событие обновлено",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 11),
+            startAt: FutureUtcDate(5, 10),
+            endAt: FutureUtcDate(5, 11),
             totalSeats: 30);
 
         // Act
-        var updateResult = await service.UpdateAsync(eventItem.Id, updatedEvent);
-        var storedEvent = await service.GetByIdAsync(eventItem.Id);
+        var updateResult =
+            await service.UpdateAsync(eventItem.Id, updatedEvent);
+
+        var storedEvent =
+            await service.GetByIdAsync(eventItem.Id);
 
         // Assert
         updateResult.Should().Be(EventUpdateResult.Success);
@@ -241,13 +269,16 @@ public class EventServiceTests
 
         using (var arrangeScope = provider.CreateScope())
         {
-            var service = arrangeScope.ServiceProvider.GetRequiredService<IEventService>();
-            var eventRepository = arrangeScope.ServiceProvider.GetRequiredService<IEventRepository>();
+            var service =
+                arrangeScope.ServiceProvider.GetRequiredService<IEventService>();
+
+            var eventRepository =
+                arrangeScope.ServiceProvider.GetRequiredService<IEventRepository>();
 
             var eventItem = await service.CreateAsync(CreateEvent(
                 title: "Событие",
-                startAt: UtcDate(2026, 4, 12, 10),
-                endAt: UtcDate(2026, 4, 12, 11),
+                startAt: FutureUtcDate(6, 10),
+                endAt: FutureUtcDate(6, 11),
                 totalSeats: 40));
 
             eventItem.TryReserveSeats(20);
@@ -260,26 +291,31 @@ public class EventServiceTests
 
         using (var actScope = provider.CreateScope())
         {
-            var service = actScope.ServiceProvider.GetRequiredService<IEventService>();
+            var service =
+                actScope.ServiceProvider.GetRequiredService<IEventService>();
 
             var updatedEvent = CreateEvent(
                 title: "Событие обновлено",
-                startAt: UtcDate(2026, 4, 12, 10),
-                endAt: UtcDate(2026, 4, 12, 11),
+                startAt: FutureUtcDate(6, 10),
+                endAt: FutureUtcDate(6, 11),
                 totalSeats: 10);
 
             // Act
-            updateResult = await service.UpdateAsync(eventId, updatedEvent);
+            updateResult =
+                await service.UpdateAsync(eventId, updatedEvent);
         }
 
         using (var assertScope = provider.CreateScope())
         {
-            var service = assertScope.ServiceProvider.GetRequiredService<IEventService>();
+            var service =
+                assertScope.ServiceProvider.GetRequiredService<IEventService>();
 
-            var storedEvent = await service.GetByIdAsync(eventId);
+            var storedEvent =
+                await service.GetByIdAsync(eventId);
 
             // Assert
-            updateResult.Should().Be(EventUpdateResult.TotalSeatsLessThanReservedSeats);
+            updateResult.Should()
+                .Be(EventUpdateResult.TotalSeatsLessThanReservedSeats);
 
             storedEvent.Should().NotBeNull();
             storedEvent!.Title.Should().Be("Событие");
@@ -295,16 +331,20 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         var createdEvent = await service.CreateAsync(CreateEvent(
             title: "На удаление",
-            startAt: UtcDate(2026, 4, 13, 10),
-            endAt: UtcDate(2026, 4, 13, 11)));
+            startAt: FutureUtcDate(7, 10),
+            endAt: FutureUtcDate(7, 11)));
 
         // Act
-        var deleteResult = await service.DeleteAsync(createdEvent.Id);
-        var deletedEvent = await service.GetByIdAsync(createdEvent.Id);
+        var deleteResult =
+            await service.DeleteAsync(createdEvent.Id);
+
+        var deletedEvent =
+            await service.GetByIdAsync(createdEvent.Id);
 
         // Assert
         deleteResult.Should().BeTrue();
@@ -318,10 +358,12 @@ public class EventServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var service = scope.ServiceProvider.GetRequiredService<IEventService>();
+        var service =
+            scope.ServiceProvider.GetRequiredService<IEventService>();
 
         // Act
-        var result = await service.DeleteAsync(999);
+        var result =
+            await service.DeleteAsync(999);
 
         // Assert
         result.Should().BeFalse();
@@ -342,45 +384,52 @@ public class EventServiceTests
             totalSeats);
     }
 
-    private static async Task FillEventsAsync(IEventService service)
+    private static async Task FillEventsAsync(
+        IEventService service)
     {
         await service.CreateAsync(CreateEvent(
             title: "Пресс качат",
-            startAt: UtcDate(2026, 4, 10, 10),
-            endAt: UtcDate(2026, 4, 10, 12)));
+            startAt: FutureUtcDate(10, 10),
+            endAt: FutureUtcDate(10, 12)));
 
         await service.CreateAsync(CreateEvent(
             title: "10 км бегит",
-            startAt: UtcDate(2026, 4, 11, 10),
-            endAt: UtcDate(2026, 4, 11, 12),
+            startAt: FutureUtcDate(11, 10),
+            endAt: FutureUtcDate(11, 12),
             totalSeats: 15));
 
         await service.CreateAsync(CreateEvent(
             title: "Турник делат",
-            startAt: UtcDate(2026, 4, 12, 10),
-            endAt: UtcDate(2026, 4, 12, 12)));
+            startAt: FutureUtcDate(12, 10),
+            endAt: FutureUtcDate(12, 12)));
 
         await service.CreateAsync(CreateEvent(
             title: "Анжуманя делат",
-            startAt: UtcDate(2026, 5, 13, 10),
-            endAt: UtcDate(2026, 5, 13, 12),
+            startAt: FutureUtcDate(13, 10),
+            endAt: FutureUtcDate(13, 12),
             totalSeats: 20));
 
         await service.CreateAsync(CreateEvent(
             title: "Словарь купит",
-            startAt: UtcDate(2026, 5, 14, 10),
-            endAt: UtcDate(2026, 5, 14, 12)));
+            startAt: FutureUtcDate(14, 10),
+            endAt: FutureUtcDate(14, 12)));
     }
 
-    private static DateTime UtcDate(
-        //По факту он здесь не нужен, но тогда потеряем единообразие с интеграционными, и возможно в будущем добавлю в методы проверки unspecified до сохранения в базу
-        int year,
-        int month,
-        int day,
+    private static DateTime FutureUtcDate( //Буду все таки динамически обновлять в зависимости от даты запуска теста, раз у нас теперь достаточно проверок на "дата не меньше чем текущая"
+        int daysFromToday,
         int hour = 0,
         int minute = 0,
         int second = 0)
     {
-        return new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
+        var date = DateTime.UtcNow.Date.AddDays(daysFromToday);
+
+        return new DateTime(
+            date.Year,
+            date.Month,
+            date.Day,
+            hour,
+            minute,
+            second,
+            DateTimeKind.Utc);
     }
 }

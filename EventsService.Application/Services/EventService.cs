@@ -99,7 +99,7 @@ public class EventService : IEventService
         await _eventRepository.SaveChangesAsync();
 
         await _cacheService.RemoveAsync(
-            EventCacheKeys.ById(eventItem.Id));
+            EventCacheKeys.ById(id));
 
         return EventUpdateResult.Success;
     }
