@@ -23,5 +23,6 @@
     <Project Path="UsersService.Infrastructure/UsersService.Infrastructure.csproj" />
     <Project Path="UsersService.Presentation/UsersService.Presentation.csproj" Id="b25b1164-56a9-4624-beea-70bd88a68a16" />
   </Folder>
+  <Project Path="RestApiEventProject.IntegrationTests/RestApiEventProject.IntegrationTests.csproj" />
   <Project Path="RestApiEventProject.Tests/RestApiProject.Tests.csproj" />
 </Solution>

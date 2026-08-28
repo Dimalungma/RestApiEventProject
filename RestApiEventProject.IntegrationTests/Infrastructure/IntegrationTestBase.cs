@@ -5,14 +5,17 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 {
     protected readonly PostgreSqlTestFixture Fixture;
 
-    protected IntegrationTestBase(PostgreSqlTestFixture fixture)
+    protected IntegrationTestBase(
+        PostgreSqlTestFixture fixture)
     {
         Fixture = fixture;
     }
 
+    protected abstract Task ResetDatabaseAsync();
+
     public async Task InitializeAsync()
     {
-        await Fixture.ResetDatabaseAsync();
+        await ResetDatabaseAsync();
     }
 
     public Task DisposeAsync()
