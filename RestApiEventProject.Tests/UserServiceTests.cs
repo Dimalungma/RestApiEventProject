@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using RestApiEventProject.Application;
-using RestApiEventProject.Domain;
 using RestApiProject.Tests.Infrastructure;
+using UsersService.Application;
+using UsersService.Domain;
 
 namespace RestApiProject.Tests;
 
@@ -15,9 +15,14 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var userRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+        var passwordHasher =
+            scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
         // Act
         var error = await userService.RegisterAsync(
@@ -28,13 +33,18 @@ public class UserServiceTests
         // Assert
         error.Should().BeNull();
 
-        var savedUser = await userRepository.GetByLoginAsync("test-user");
+        var savedUser =
+            await userRepository.GetByLoginAsync("test-user");
 
         savedUser.Should().NotBeNull();
         savedUser!.Login.Should().Be("test-user");
         savedUser.Role.Should().Be(UserRole.User);
         savedUser.PasswordHash.Should().NotBe("safePassword");
-        passwordHasher.Verify("safePassword", savedUser.PasswordHash).Should().BeTrue();
+
+        passwordHasher
+            .Verify("safePassword", savedUser.PasswordHash)
+            .Should()
+            .BeTrue();
     }
 
     [Fact]
@@ -44,8 +54,11 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var userRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
         // Act
         var error = await userService.RegisterAsync(
@@ -56,7 +69,8 @@ public class UserServiceTests
         // Assert
         error.Should().BeNull();
 
-        var savedUser = await userRepository.GetByLoginAsync("admin-user");
+        var savedUser =
+            await userRepository.GetByLoginAsync("admin-user");
 
         savedUser.Should().NotBeNull();
         savedUser!.Role.Should().Be(UserRole.Admin);
@@ -72,8 +86,11 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var userRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
         // Act
         var error = await userService.RegisterAsync(
@@ -84,7 +101,9 @@ public class UserServiceTests
         // Assert
         error.Should().Be(UserRegisterError.InvalidLogin);
 
-        var savedUser = await userRepository.GetByLoginAsync(login);
+        var savedUser =
+            await userRepository.GetByLoginAsync(login);
+
         savedUser.Should().BeNull();
     }
 
@@ -98,8 +117,11 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var userRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
         // Act
         var error = await userService.RegisterAsync(
@@ -110,7 +132,9 @@ public class UserServiceTests
         // Assert
         error.Should().Be(UserRegisterError.InvalidPassword);
 
-        var savedUser = await userRepository.GetByLoginAsync("test-user");
+        var savedUser =
+            await userRepository.GetByLoginAsync("test-user");
+
         savedUser.Should().BeNull();
     }
 
@@ -125,8 +149,11 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var userRepository =
+            scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
         // Act
         var error = await userService.RegisterAsync(
@@ -137,7 +164,9 @@ public class UserServiceTests
         // Assert
         error.Should().Be(UserRegisterError.PasswordTooSimple);
 
-        var savedUser = await userRepository.GetByLoginAsync("test-user");
+        var savedUser =
+            await userRepository.GetByLoginAsync("test-user");
+
         savedUser.Should().BeNull();
     }
 
@@ -149,25 +178,31 @@ public class UserServiceTests
 
         using (var firstScope = provider.CreateScope())
         {
-            var userService = firstScope.ServiceProvider.GetRequiredService<IUserService>();
+            var userService =
+                firstScope.ServiceProvider
+                    .GetRequiredService<IUserService>();
 
-            var firstError = await userService.RegisterAsync(
-                "existing-user",
-                "safePassword",
-                isAdmin: false);
+            var firstError =
+                await userService.RegisterAsync(
+                    "existing-user",
+                    "safePassword",
+                    isAdmin: false);
 
             firstError.Should().BeNull();
         }
 
         using var secondScope = provider.CreateScope();
 
-        var secondUserService = secondScope.ServiceProvider.GetRequiredService<IUserService>();
+        var secondUserService =
+            secondScope.ServiceProvider
+                .GetRequiredService<IUserService>();
 
         // Act
-        var error = await secondUserService.RegisterAsync(
-            "existing-user",
-            "anotherPassword",
-            isAdmin: false);
+        var error =
+            await secondUserService.RegisterAsync(
+                "existing-user",
+                "anotherPassword",
+                isAdmin: false);
 
         // Assert
         error.Should().Be(UserRegisterError.LoginAlreadyExists);
@@ -180,13 +215,18 @@ public class UserServiceTests
         using var provider = TestServiceProviderFactory.Create();
         using var scope = provider.CreateScope();
 
-        var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-        var tokenGenerator = scope.ServiceProvider.GetRequiredService<TestJwtTokenGenerator>();
+        var userService =
+            scope.ServiceProvider.GetRequiredService<IUserService>();
+
+        var tokenGenerator =
+            scope.ServiceProvider
+                .GetRequiredService<TestJwtTokenGenerator>();
 
         // Act
-        var (token, error) = await userService.LoginAsync(
-            "missing-user",
-            "safePassword");
+        var (token, error) =
+            await userService.LoginAsync(
+                "missing-user",
+                "safePassword");
 
         // Assert
         token.Should().BeNull();
@@ -202,25 +242,34 @@ public class UserServiceTests
 
         using (var registerScope = provider.CreateScope())
         {
-            var userService = registerScope.ServiceProvider.GetRequiredService<IUserService>();
+            var userService =
+                registerScope.ServiceProvider
+                    .GetRequiredService<IUserService>();
 
-            var registerError = await userService.RegisterAsync(
-                "test-user",
-                "correctPassword",
-                isAdmin: false);
+            var registerError =
+                await userService.RegisterAsync(
+                    "test-user",
+                    "correctPassword",
+                    isAdmin: false);
 
             registerError.Should().BeNull();
         }
 
         using var loginScope = provider.CreateScope();
 
-        var loginService = loginScope.ServiceProvider.GetRequiredService<IUserService>();
-        var tokenGenerator = loginScope.ServiceProvider.GetRequiredService<TestJwtTokenGenerator>();
+        var loginService =
+            loginScope.ServiceProvider
+                .GetRequiredService<IUserService>();
+
+        var tokenGenerator =
+            loginScope.ServiceProvider
+                .GetRequiredService<TestJwtTokenGenerator>();
 
         // Act
-        var (token, error) = await loginService.LoginAsync(
-            "test-user",
-            "wrongPassword");
+        var (token, error) =
+            await loginService.LoginAsync(
+                "test-user",
+                "wrongPassword");
 
         // Assert
         token.Should().BeNull();
@@ -238,17 +287,25 @@ public class UserServiceTests
 
         using (var registerScope = provider.CreateScope())
         {
-            var userService = registerScope.ServiceProvider.GetRequiredService<IUserService>();
-            var userRepository = registerScope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var userService =
+                registerScope.ServiceProvider
+                    .GetRequiredService<IUserService>();
 
-            var registerError = await userService.RegisterAsync(
-                "test-admin",
-                "safePassword",
-                isAdmin: true);
+            var userRepository =
+                registerScope.ServiceProvider
+                    .GetRequiredService<IUserRepository>();
+
+            var registerError =
+                await userService.RegisterAsync(
+                    "test-admin",
+                    "safePassword",
+                    isAdmin: true);
 
             registerError.Should().BeNull();
 
-            var user = await userRepository.GetByLoginAsync("test-admin");
+            var user =
+                await userRepository.GetByLoginAsync("test-admin");
+
             user.Should().NotBeNull();
 
             userId = user!.Id;
@@ -256,13 +313,19 @@ public class UserServiceTests
 
         using var loginScope = provider.CreateScope();
 
-        var loginService = loginScope.ServiceProvider.GetRequiredService<IUserService>();
-        var tokenGenerator = loginScope.ServiceProvider.GetRequiredService<TestJwtTokenGenerator>();
+        var loginService =
+            loginScope.ServiceProvider
+                .GetRequiredService<IUserService>();
+
+        var tokenGenerator =
+            loginScope.ServiceProvider
+                .GetRequiredService<TestJwtTokenGenerator>();
 
         // Act
-        var (token, error) = await loginService.LoginAsync(
-            "test-admin",
-            "safePassword");
+        var (token, error) =
+            await loginService.LoginAsync(
+                "test-admin",
+                "safePassword");
 
         // Assert
         error.Should().BeNull();

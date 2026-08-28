@@ -8,6 +8,8 @@ public interface IEventRepository
 
     Task<Event?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<Event>> GetTop10Async(CancellationToken cancellationToken = default);
+
     Task AddAsync(Event eventItem, CancellationToken cancellationToken = default);
 
     void Delete(Event eventItem);

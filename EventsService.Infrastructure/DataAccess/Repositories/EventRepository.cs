@@ -59,6 +59,19 @@ public class EventRepository : IEventRepository
         return await _context.Events.FindAsync([id], cancellationToken);
     }
 
+    public async Task<IReadOnlyCollection<Event>> GetTop10Async(
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Events
+            .AsNoTracking()
+            .Where(e => e.TotalSeats > 0)
+            .OrderByDescending(e =>
+                (double)(e.TotalSeats - e.AvailableSeats) / e.TotalSeats)
+            .ThenBy(e => e.Id)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Event eventItem, CancellationToken cancellationToken = default)
     {
         await _context.Events.AddAsync(eventItem, cancellationToken);

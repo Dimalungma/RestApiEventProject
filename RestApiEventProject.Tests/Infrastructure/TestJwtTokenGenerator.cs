@@ -1,5 +1,5 @@
-﻿using RestApiEventProject.Application;
-using RestApiEventProject.Domain;
+﻿using UsersService.Application;
+using UsersService.Domain;
 
 namespace RestApiProject.Tests.Infrastructure;
 
@@ -21,6 +21,7 @@ internal sealed class TestJwtTokenGenerator : IJwtTokenGenerator
         UserRole role)
     {
         GenerateCalls++;
+
         LastUserId = userId;
         LastLogin = login;
         LastRole = role;

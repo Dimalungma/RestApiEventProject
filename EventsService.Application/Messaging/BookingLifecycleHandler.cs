@@ -8,17 +8,20 @@ public sealed class BookingLifecycleHandler : IBookingLifecycleHandler
     private readonly IEventRepository _eventRepository;
     private readonly IBookingReservationRepository _bookingReservationRepository;
     private readonly IEventSeatEventPublisher _eventPublisher;
+    private readonly ICacheService _cacheService;
     private readonly ILogger<BookingLifecycleHandler> _logger;
 
     public BookingLifecycleHandler(
         IEventRepository eventRepository,
         IBookingReservationRepository bookingReservationRepository,
         IEventSeatEventPublisher eventPublisher,
+        ICacheService cacheService,
         ILogger<BookingLifecycleHandler> logger)
     {
         _eventRepository = eventRepository;
         _bookingReservationRepository = bookingReservationRepository;
         _eventPublisher = eventPublisher;
+        _cacheService = cacheService;
         _logger = logger;
     }
 
@@ -73,6 +76,9 @@ public sealed class BookingLifecycleHandler : IBookingLifecycleHandler
 
             await _bookingReservationRepository.SaveChangesAsync(
                 cancellationToken);
+
+            await _cacheService.RemoveAsync(
+                EventCacheKeys.ById(eventId));
 
             await _eventPublisher.PublishEventSeatReservedAsync(
                 bookingId,
@@ -141,6 +147,7 @@ public sealed class BookingLifecycleHandler : IBookingLifecycleHandler
         {
             return;
         }
+        int? changedEventId = null;
 
         if (reservation.Status == BookingReservationStatus.Reserved)
         {
@@ -151,6 +158,7 @@ public sealed class BookingLifecycleHandler : IBookingLifecycleHandler
             if (eventItem is not null)
             {
                 eventItem.ReleaseSeats(reservation.SeatsCount);
+                changedEventId = reservation.EventId;
             }
             else
             {
@@ -163,6 +171,12 @@ public sealed class BookingLifecycleHandler : IBookingLifecycleHandler
 
         await _bookingReservationRepository.SaveChangesAsync(
             cancellationToken);
+
+        if (changedEventId.HasValue)
+        {
+            await _cacheService.RemoveAsync(
+                EventCacheKeys.ById(changedEventId.Value));
+        }
     }
 
     private async Task SaveUnavailableAsync(
