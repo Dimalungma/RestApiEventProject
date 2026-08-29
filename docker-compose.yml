@@ -103,12 +103,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
-volumes:
-  users-db-data:
-  events-db-data:
-  bookings-db-data:
-  grafana-data:
+      
+      
   
     # ─────────────────────────── Monitoring ───────────────────────────
 
@@ -138,3 +134,9 @@ volumes:
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - grafana-data:/var/lib/grafana
+
+volumes:
+  users-db-data:
+  events-db-data:
+  bookings-db-data:
+  grafana-data:
