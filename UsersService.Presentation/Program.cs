@@ -14,7 +14,7 @@ builder.ConfigureLogger();
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
-        .AddService(serviceName: "users-service"))
+        .AddService(serviceName: builder.Configuration["OpenTelemetry:ServiceName"]!))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()

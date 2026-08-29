@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.ConfigureLogger();
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
-        .AddService(serviceName: "events-service"))
+        .AddService(serviceName: builder.Configuration["OpenTelemetry:ServiceName"]!))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()

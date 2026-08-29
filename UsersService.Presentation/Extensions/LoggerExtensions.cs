@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using Serilog.Formatting.Compact;
 
 namespace UsersService.Presentation.Extensions;
 
@@ -6,23 +7,13 @@ public static class LoggerExtensions
 {
     public static void ConfigureLogger(this WebApplicationBuilder builder)
     {
-        var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.File(
-                path: "logs/users-service-.txt",
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7
-            );
-
-        if (builder.Environment.IsDevelopment())
-        {
-            loggerConfig = loggerConfig
-                .MinimumLevel.Debug()
-                .WriteTo.Console();
-        }
-
-        Log.Logger = loggerConfig.CreateLogger();
-
-        builder.Host.UseSerilog();
+        builder.Host.UseSerilog((ctx, cfg) =>
+            cfg.ReadFrom.Configuration(ctx.Configuration)
+                .WriteTo.Console(new CompactJsonFormatter())
+                .WriteTo.File(
+                    new CompactJsonFormatter(),
+                    path: "logs/users-service-.txt",
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7));
     }
 }
