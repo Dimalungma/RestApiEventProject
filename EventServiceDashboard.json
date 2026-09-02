@@ -1,0 +1,525 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ffwnlci31hnuof"
+      },
+      "description": "Число запросов в секунду (шаг минута)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "builder",
+          "expr": "sum(\r\n  rate(\r\n    http_server_request_duration_seconds_count{\r\n      job=\"events-service\",\r\n      http_route!=\"/metrics\"\r\n    }[1m]\r\n  )\r\n)",
+          "instant": false,
+          "legendFormat": "Requests per sec",
+          "range": true,
+          "refId": "Throughput / RPS"
+        }
+      ],
+      "title": "Request Throughput",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ffwnlci31hnuof"
+      },
+      "description": "Число запросов прямо сейчас",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "sum(\r\n  http_server_active_requests{\r\n    job=\"events-service\",\r\n    http_route!=\"/metrics\"\r\n  }\r\n)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Active Requests",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ffwnlci31hnuof"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\n(\r\n  sum(\r\n    rate(\r\n      http_server_request_duration_seconds_count{\r\n        job=\"events-service\",\r\n        http_route!=\"/metrics\",\r\n        http_response_status_code=~\"5..\"\r\n      }[5m]\r\n    )\r\n  )\r\n  or vector(0)\r\n)\r\n/\r\nsum(\r\n  rate(\r\n    http_server_request_duration_seconds_count{\r\n      job=\"events-service\",\r\n      http_route!=\"/metrics\"\r\n    }[5m]\r\n  )\r\n)",
+          "instant": false,
+          "legendFormat": "Errors%",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\n(\r\n  sum(\r\n    rate(\r\n      http_server_request_duration_seconds_count{\r\n        job=\"events-service\",\r\n        http_route!=\"/metrics\",\r\n        http_response_status_code=~\"4..\"\r\n      }[5m]\r\n    )\r\n  )\r\n  or vector(0)\r\n)\r\n/\r\nsum(\r\n  rate(\r\n    http_server_request_duration_seconds_count{\r\n      job=\"events-service\",\r\n      http_route!=\"/metrics\"\r\n    }[5m]\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Bad requests%",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Error rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ffwnlci31hnuof"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 3,
+        "x": 12,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\n(\r\n  sum(\r\n    rate(\r\n      http_server_request_duration_seconds_count{\r\n        job=\"events-service\",\r\n        http_route!=\"/metrics\",\r\n        http_response_status_code=~\"5..\"\r\n      }[5m]\r\n    )\r\n  )\r\n  or vector(0)\r\n)\r\n/\r\nsum(\r\n  rate(\r\n    http_server_request_duration_seconds_count{\r\n      job=\"events-service\",\r\n      http_route!=\"/metrics\"\r\n    }[5m]\r\n  )\r\n)",
+          "instant": false,
+          "legendFormat": "Errors%",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\n(\r\n  sum(\r\n    rate(\r\n      http_server_request_duration_seconds_count{\r\n        job=\"events-service\",\r\n        http_route!=\"/metrics\",\r\n        http_response_status_code=~\"4..\"\r\n      }[5m]\r\n    )\r\n  )\r\n  or vector(0)\r\n)\r\n/\r\nsum(\r\n  rate(\r\n    http_server_request_duration_seconds_count{\r\n      job=\"events-service\",\r\n      http_route!=\"/metrics\"\r\n    }[5m]\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Bad requests%",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Error rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "ffwnlci31hnuof"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "builder",
+          "expr": "histogram_quantile(\r\n  0.50,\r\n  sum by (le) (\r\n    rate(\r\n      http_server_request_duration_seconds_bucket{\r\n        job=\"events-service\",\r\n        http_route!=\"/metrics\"\r\n      }[5m]\r\n    )\r\n  )\r\n)",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "p50",
+          "range": true,
+          "refId": "p50"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by(le) (rate(http_server_request_duration_seconds_bucket{job=\"events-service\", http_route!=\"/metrics\"}[5m])))",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "p95",
+          "range": true,
+          "refId": "p95",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "ffwnlci31hnuof"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by(le) (rate(http_server_request_duration_seconds_bucket{job=\"events-service\", http_route!=\"/metrics\"}[5m])))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "p99",
+          "range": true,
+          "refId": "p99"
+        }
+      ],
+      "title": "Request Latency",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "EventServiceDashboard",
+  "uid": "cfwnmkevrompsa",
+  "version": 8,
+  "weekStart": ""
+}

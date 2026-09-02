@@ -4,10 +4,27 @@ using UsersService.Infrastructure;
 using UsersService.Presentation.Extensions;
 using UsersService.Presentation.Middleware;
 using UsersService.Presentation.Options;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.ConfigureLogger();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Configuration["OpenTelemetry:ServiceName"]!))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(options =>
+            options.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -60,5 +77,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapPrometheusScrapingEndpoint(); // доступен по /metrics 
 
 app.Run();

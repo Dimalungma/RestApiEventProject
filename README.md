@@ -552,6 +552,48 @@ dotnet dev-certs https --trust
 
 ---
 
+## Наблюдаемость и мониторинг
+
+Во всех трёх сервисах подключён OpenTelemetry. Автоматически собираются трейсы входящих ASP.NET Core HTTP-запросов, исходящих `HttpClient`-запросов и запросов Entity Framework Core к PostgreSQL. Трейсы экспортируются по OTLP в Jaeger. Для сервисов используются отдельные имена `users-service`, `events-service` и `bookings-service`.
+
+HTTP-метрики ASP.NET Core и метрики рантайма .NET экспортируются в Prometheus. Каждый сервис предоставляет endpoint `/metrics`:
+
+```text
+UsersService    → https://localhost:7201/metrics
+EventsService   → https://localhost:7202/metrics
+BookingsService → https://localhost:7203/metrics
+```
+
+Prometheus запускается в Docker и собирает метрики сервисов с интервалом 15 секунд. Конфигурация scraping находится в корневом файле `prometheus.yml`.
+
+Prometheus, Jaeger и Grafana входят в общий `docker-compose.yml` и запускаются вместе с остальной инфраструктурой из корня репозитория:
+
+```powershell
+docker compose up -d
+```
+
+После запуска доступны:
+
+| Инструмент | Назначение | Адрес |
+| --- | --- | --- |
+| Prometheus | Хранение и просмотр метрик | `http://localhost:9090` |
+| Jaeger | Просмотр distributed traces | `http://localhost:16686` |
+| Grafana | Визуализация метрик | `http://localhost:3000` |
+| Jaeger OTLP gRPC | Приём трейсов от сервисов | `http://localhost:4317` |
+
+Для локальной Grafana используются логин `admin` и пароль `admin`. В качестве Prometheus datasource необходимо указать:
+
+```text
+http://prometheus:9090
+```
+
+Экспортированный дашборд для `EventsService` находится в файле `EventServiceDashboard.json`. Он отображает latency (p50, p95, p99), throughput, error rate и количество активных HTTP-запросов. Пример отображения метрик сохранён в `GrafanaEventServiceMetricsExample.PNG`.
+
+Логирование всех трёх сервисов выполняется через Serilog в структурированном JSON-формате (`CompactJsonFormatter`). JSON-логи выводятся в консоль и сохраняются в ежедневные файлы в каталогах `logs` соответствующих сервисов.
+
+---
+
+
 ## Получение JWT-токена через Swagger
 
 1. Открыть Swagger `UsersService`:
